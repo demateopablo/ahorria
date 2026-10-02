@@ -32,7 +32,7 @@ catalogo.get("/bootstrap", async (c) => {
     p.cuenta.findMany({ orderBy: [{ orden: "asc" }, { nombre: "asc" }] }),
     p.categoria.findMany({ orderBy: [{ orden: "asc" }, { nombre: "asc" }] }),
     p.movimiento.count({ where: { estado: "pendiente" } }),
-    p.cotizacion.findFirst({ orderBy: { fecha: "desc" } }),
+    p.cotizacion.findFirst({ where: { tipo: "oficial" }, orderBy: { fecha: "desc" } }),
     p.movimiento.findMany({
       where: { fechaConsumo: { gte: hace60 }, categoriaId: { not: null }, estado: "confirmado", planCuotasId: null },
       select: { categoriaId: true, cuentaId: true, tipo: true },

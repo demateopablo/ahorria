@@ -4,6 +4,7 @@ import type { Fecha, Moneda } from "../../shared/domain/tipos.js";
 import type { PrismaClient } from "../db.js";
 import type { Config } from "../generated/prisma/client.js";
 import { HttpError } from "../http.js";
+import { actualizarCotizaciones } from "./cotizaciones.js";
 
 export interface Contexto {
   config: Config;
@@ -14,14 +15,17 @@ export interface Contexto {
 }
 
 export async function cargarContexto(p: PrismaClient): Promise<Contexto> {
-  const [config, cot] = await Promise.all([
-    p.config.findUnique({ where: { id: 1 } }),
-    p.cotizacion.findFirst({ orderBy: [{ fecha: "desc" }, { tipo: "asc" }] }),
-  ]);
+  const config = await p.config.findUnique({ where: { id: 1 } });
   if (!config) throw new HttpError(503, "El hogar todavía no está configurado: corré `npm run seed`");
+  const hoy = hoyEn(config.timezone);
+  await actualizarCotizaciones(p, hoy);
+  // Para convertir se usa el oficial más reciente; si nunca hubo oficial, cualquier otra.
+  const cot =
+    (await p.cotizacion.findFirst({ where: { tipo: "oficial" }, orderBy: { fecha: "desc" } })) ??
+    (await p.cotizacion.findFirst({ orderBy: { fecha: "desc" } }));
   return {
     config,
-    hoy: hoyEn(config.timezone),
+    hoy,
     base: config.monedaBase,
     cotizacion: cot ? dec(cot.valor).toString() : null,
   };

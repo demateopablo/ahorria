@@ -461,7 +461,10 @@ export function Cotizaciones() {
   return (
     <PantallaAjuste titulo="Dólar">
       <Tarjeta className="space-y-3">
-        <p className="text-sm text-ink-2">Se usa para los gastos en dólares que no traen su propia cotización y para la proyección.</p>
+        <p className="text-sm text-ink-2">
+          Se actualiza sola todos los días: dólar oficial del Banco Nación y MEP (dolarapi.com; si no responde, el BCRA). Para convertir gastos en
+          dólares y en la proyección se usa el oficial. Si querés otro valor para un día, cargalo acá y se respeta.
+        </p>
         <div className="grid grid-cols-2 gap-2">
           <Campo label="Pesos por dólar">
             <Input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="Ej: 1.420,50" />

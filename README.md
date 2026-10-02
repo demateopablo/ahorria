@@ -31,7 +31,7 @@ datos. Nadie más ve tus números.
   entre ustedes no cuentan como gasto (nada se cuenta dos veces).
 - **Proyección a 6 o 12 meses**: ingresos esperados, fijos, cuotas y eventos (cumpleaños, fiestas),
   con la sobra de cada mes y aviso cuando un mes viene ajustado o en rojo.
-- **Pesos y dólares**: cada gasto en USD guarda su cotización.
+- **Pesos y dólares**: la cotización (oficial BNA y MEP) se actualiza sola cada día y cada gasto en USD guarda la suya.
 - **PWA**: se instala en el celular y se abre como una app.
 
 ## Levantarla con Claude Code (recomendado)
@@ -79,7 +79,7 @@ Antes del primer uso hay que migrar y cargar la base de Neon desde tu compu
 | `DIRECT_URL` | Opcional: conexión directa para migraciones en Neon. |
 | `SESSION_SECRET` | Secreto aleatorio para firmar la sesión. |
 | `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` | El mismo Client ID de Google, para el server y el front. |
-| `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` | Opcional: IA con cualquier proveedor compatible con OpenAI (OpenRouter, OpenAI, Groq, Ollama…). |
+| `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` | Opcional: IA con cualquier proveedor compatible con OpenAI. Ej. Claude: `https://api.anthropic.com/v1` + `claude-haiku-4-5`; también OpenRouter, OpenAI, Groq, Ollama… |
 | `ALLOW_DEV_LOGIN` | Solo local: entrar sin Google. Nunca funciona en Vercel. |
 
 ## Cómo está hecha

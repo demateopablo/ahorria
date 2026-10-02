@@ -82,6 +82,8 @@ Sirve para cargar escribiendo ("super 45 mil con MP"). Cualquier proveedor compa
 - OpenRouter (recomendado, muchos modelos): crear key en https://openrouter.ai/keys,
   `LLM_BASE_URL=https://openrouter.ai/api/v1`, `LLM_MODEL=openai/gpt-4o-mini` (o el que prefiera; se
   pueden poner varios separados por coma como fallback).
+- Claude (Anthropic): key en https://console.anthropic.com/settings/keys,
+  `LLM_BASE_URL=https://api.anthropic.com/v1`, `LLM_MODEL=claude-haiku-4-5` (rápido y barato; sirve de sobra para esto).
 - OpenAI: `LLM_BASE_URL=https://api.openai.com/v1`, `LLM_MODEL=gpt-4o-mini`.
 - Ollama local: `LLM_BASE_URL=http://localhost:11434/v1`, cualquier `LLM_API_KEY` no vacía.
 
