@@ -31,12 +31,11 @@ Pensada para Argentina: pesos y dólares (con cotización automática), tarjetas
 vencido, cuotas, aguinaldo, bonos trimestrales, ajustes por inflación.
 
 <p align="center">
-  <img src="docs/capturas/inicio.webp" width="200" alt="Inicio: pendientes para confirmar y lo que queda en el mes" />
-  <img src="docs/capturas/carga.webp" width="200" alt="Carga rápida con teclado numérico y categorías" />
-  <img src="docs/capturas/proyeccion.webp" width="200" alt="Proyección de flujo a 6 meses" />
-  <img src="docs/capturas/cuotas.webp" width="200" alt="Compras en cuotas" />
+  <img src="docs/capturas/inicio.webp" width="240" alt="Inicio: fijos para confirmar y lo que queda en el mes" />
+  <img src="docs/capturas/carga.webp" width="240" alt="Carga rápida con teclado propio, categorías y campo de IA" />
+  <img src="docs/capturas/proyeccion.webp" width="240" alt="Proyección de flujo a 6 meses" />
 </p>
-<p align="center"><sub>Capturas con datos de ejemplo.</sub></p>
+<p align="center"><sub>Datos de ejemplo. <a href="#capturas">Más capturas ↓</a></sub></p>
 
 ## Qué hace
 
@@ -51,6 +50,23 @@ vencido, cuotas, aguinaldo, bonos trimestrales, ajustes por inflación.
 | **Proyección** | 6 o 12 meses: ingresos esperados, fijos, cuotas y eventos. La sobra de cada mes y aviso cuando viene *ajustado* o *en rojo*. |
 | **Dólares** | Cotización oficial (BNA) y MEP automática todos los días. Cada gasto en USD guarda la suya. |
 | **App en el celular** | Se instala desde el navegador (PWA), con atajo directo a «Cargar gasto». |
+
+## Capturas
+
+| Inicio | En qué se fue | Cargar un gasto |
+|:---:|:---:|:---:|
+| <img src="docs/capturas/inicio.webp" width="240" alt="Inicio" /> | <img src="docs/capturas/categorias.webp" width="240" alt="Gastos por categoría y lo que viene" /> | <img src="docs/capturas/carga.webp" width="240" alt="Carga rápida" /> |
+| Fijos del mes para confirmar con un toque y cuánto te quedaría. | Gastos por categoría y la sobra estimada de los próximos meses. | Monto, categoría, guardar. O escribilo y lo completa la IA. |
+
+| Movimientos | Proyección | Detalle de un mes |
+|:---:|:---:|:---:|
+| <img src="docs/capturas/movimientos.webp" width="240" alt="Movimientos" /> | <img src="docs/capturas/proyeccion.webp" width="240" alt="Proyección" /> | <img src="docs/capturas/proyeccion-detalle.webp" width="240" alt="Detalle de un mes proyectado" /> |
+| Por mes, con filtros. Las compras con tarjeta muestran cuándo impactan. | La sobra de cada mes, con aviso cuando viene ajustado o en rojo. | Ingresos, fijos, cuotas y eventos que explican cada mes. |
+
+| Gastos fijos | Cuotas | Modo oscuro |
+|:---:|:---:|:---:|
+| <img src="docs/capturas/fijos.webp" width="240" alt="Gastos e ingresos fijos" /> | <img src="docs/capturas/cuotas.webp" width="240" alt="Compras en cuotas" /> | <img src="docs/capturas/inicio-oscuro.webp" width="240" alt="Inicio en modo oscuro" /> |
+| Sueldo, alquiler, servicios, aguinaldo; y los variables como el súper. | Cuánto falta pagar de cada compra y cuándo vence la próxima. | Sigue el modo del sistema. |
 
 ## Instalación en un paso
 
