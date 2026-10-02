@@ -1,4 +1,14 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  // Vercel compila api/index.ts con este archivo: mismas opciones que tsconfig.node.json
+  // (sin `strict`, zod infiere los campos como opcionales y el chequeo de tipos falla).
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true
+  }
 }
