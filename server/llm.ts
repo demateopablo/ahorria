@@ -25,11 +25,24 @@ export function configLlm(): LlmConfig {
 
 const REINTENTABLES = new Set([408, 429, 500, 502, 503, 504]);
 
-/** Pide una respuesta y devuelve el texto. Prueba los modelos en orden ante errores transitorios. */
-export async function completar(opts: { system: string; user: string; maxTokens?: number; timeoutMs?: number }): Promise<string> {
+const MENSAJES = {
+  key: "La API key de IA no es válida o no tiene permisos. Revisá LLM_API_KEY.",
+  saldo: "La cuenta del proveedor de IA no tiene saldo para este modelo.",
+  saturada: "La IA está saturada en este momento (los modelos gratis tienen cupo). Probá en un rato o cargalo a mano.",
+  noEntendio: "La IA no pudo interpretarlo esta vez. Probá de nuevo o cargalo a mano.",
+};
+
+/**
+ * Pide una respuesta en JSON y la devuelve ya parseada. Hace hasta `intentos` pedidos, rotando
+ * los modelos configurados: con routers como `openrouter/free` cada intento cae en otro modelo, y
+ * algunos devuelven vacío o texto sin JSON. Los errores llegan al usuario en castellano.
+ */
+export async function completarJson(opts: { system: string; user: string; intentos?: number; timeoutMs?: number }): Promise<unknown> {
   const cfg = configLlm();
-  let ultimoError = "sin respuesta";
-  for (const modelo of cfg.modelos) {
+  const intentos = opts.intentos ?? 3;
+  let saturada = false;
+  for (let i = 0; i < intentos; i++) {
+    const modelo = cfg.modelos[i % cfg.modelos.length];
     let res: Response;
     try {
       res = await fetch(`${cfg.baseUrl}/chat/completions`, {
@@ -37,45 +50,48 @@ export async function completar(opts: { system: string; user: string; maxTokens?
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${cfg.apiKey}`,
-          // Cabeceras opcionales de OpenRouter (otros proveedores las ignoran).
+          // Cabecera opcional de OpenRouter (otros proveedores la ignoran).
           "x-title": "Ahorria",
         },
         body: JSON.stringify({
           model: modelo,
           temperature: 0,
-          max_tokens: opts.maxTokens ?? 400,
+          // Margen para modelos que "razonan" antes de responder.
+          max_tokens: 2000,
+          response_format: { type: "json_object" },
           messages: [
             { role: "system", content: opts.system },
             { role: "user", content: opts.user },
           ],
         }),
-        signal: AbortSignal.timeout(opts.timeoutMs ?? 20000),
+        signal: AbortSignal.timeout(opts.timeoutMs ?? 15000),
       });
-    } catch (e) {
-      ultimoError = e instanceof Error ? e.message : String(e);
-      continue;
+    } catch {
+      continue; // timeout o red: siguiente intento
     }
+    if (res.status === 401 || res.status === 403) throw new HttpError(502, MENSAJES.key);
+    if (res.status === 402) throw new HttpError(502, MENSAJES.saldo);
     if (!res.ok) {
-      ultimoError = `HTTP ${res.status}`;
-      if (REINTENTABLES.has(res.status)) continue;
-      throw new HttpError(502, `El proveedor de IA respondió ${res.status}`);
+      if (res.status === 429) saturada = true;
+      if (REINTENTABLES.has(res.status) || res.status === 400) continue;
+      throw new HttpError(502, MENSAJES.noEntendio);
     }
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const texto = data.choices?.[0]?.message?.content;
-    if (texto) return texto;
-    ultimoError = "respuesta vacía";
+    const data = (await res.json().catch(() => null)) as { choices?: { message?: { content?: string } }[] } | null;
+    const texto = data?.choices?.[0]?.message?.content;
+    const json = texto ? extraerJson(texto) : undefined;
+    if (json !== undefined) return json;
   }
-  throw new HttpError(502, `La IA no respondió (${ultimoError})`);
+  throw new HttpError(503, saturada ? MENSAJES.saturada : MENSAJES.noEntendio);
 }
 
-/** Extrae el primer objeto JSON de un texto (los modelos a veces lo envuelven en ```json). */
+/** Extrae el primer objeto JSON de un texto (los modelos a veces lo envuelven en ```json). undefined si no hay. */
 export function extraerJson(texto: string): unknown {
   const inicio = texto.indexOf("{");
   const fin = texto.lastIndexOf("}");
-  if (inicio < 0 || fin <= inicio) throw new HttpError(502, "La IA no devolvió JSON");
+  if (inicio < 0 || fin <= inicio) return undefined;
   try {
     return JSON.parse(texto.slice(inicio, fin + 1));
   } catch {
-    throw new HttpError(502, "La IA devolvió JSON inválido");
+    return undefined;
   }
 }

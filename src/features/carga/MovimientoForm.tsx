@@ -55,6 +55,7 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
   const [todas, setTodas] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [textoIa, setTextoIa] = useState("");
+  const [errorIa, setErrorIa] = useState<string | null>(null);
   const [confirmarBorrado, setConfirmarBorrado] = useState(false);
 
   const tipoCategoria = tipo === "ingreso" ? "ingreso" : "gasto";
@@ -110,6 +111,7 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
   const ia = useEscritura((texto: string) => post<AiParseDTO>("/ai/parse", { texto }));
   async function interpretar() {
     if (textoIa.trim().length < 2) return;
+    setErrorIa(null);
     try {
       const { borrador: b } = await ia.mutateAsync(textoIa);
       if (b.tipo) setTipo(b.tipo);
@@ -130,7 +132,8 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
       setTextoIa("");
       toast({ texto: "Listo, revisá y guardá" });
     } catch (e) {
-      setError(mensajeError(e));
+      // El texto queda escrito para reintentar; el resto del formulario sigue funcionando a mano.
+      setErrorIa(mensajeError(e));
     }
   }
 
@@ -225,6 +228,12 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
             {!ia.isPending && <Sparkles size={20} />}
           </Boton>
         </div>
+      )}
+      {ia.isPending && <p className="-mt-1 text-xs text-muted">Interpretando… (los modelos gratis pueden tardar unos segundos)</p>}
+      {errorIa && (
+        <p role="alert" className="-mt-1 rounded-xl bg-warning-soft px-3 py-2 text-sm text-ink">
+          {errorIa}
+        </p>
       )}
 
       <Segmentado

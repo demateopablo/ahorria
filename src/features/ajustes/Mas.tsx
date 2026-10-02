@@ -50,23 +50,24 @@ export function Mas() {
             ))}
           </ul>
         </Tarjeta>
-        <Tarjeta>
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-ink-2">
-              <Sparkles size={20} aria-hidden />
-            </span>
-            <div className="text-sm">
-              <p className="text-base font-medium">Carga con IA {h.ia ? "activada" : "desactivada"}</p>
-              {h.ia ? (
-                <p className="text-ink-2">Podés escribir «super 45 mil con MP» arriba del teclado al cargar un gasto.</p>
-              ) : (
-                <p className="text-ink-2">
-                  La API key no se carga desde la app (sería un secreto guardado en la base): se configura como variable de entorno del servidor
-                  (<code>LLM_API_KEY</code>, <code>LLM_BASE_URL</code> y <code>LLM_MODEL</code> en Vercel). Instrucciones en el README.
-                </p>
-              )}
-            </div>
-          </div>
+        <Tarjeta padding="chico">
+          <details className="group">
+            <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 rounded-2xl px-3 [&::-webkit-details-marker]:hidden">
+              <span className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-ink-2">
+                <Sparkles size={20} aria-hidden />
+              </span>
+              <span className="flex-1">
+                <span className="block text-base font-medium">Carga con IA</span>
+                <span className="block text-xs text-muted">{h.ia ? "Activada" : "Desactivada"}</span>
+              </span>
+              <ChevronRight size={20} className="text-muted transition group-open:rotate-90" aria-hidden />
+            </summary>
+            <p className="px-3 pb-3 text-sm text-ink-2">
+              {h.ia
+                ? "Al cargar un gasto podés escribir, por ejemplo, «super 45 mil con MP» arriba del teclado."
+                : "La API key no se carga desde la app (sería un secreto guardado en la base): se configura en el servidor con LLM_API_KEY, LLM_BASE_URL y LLM_MODEL. Instrucciones en el README."}
+            </p>
+          </details>
         </Tarjeta>
         <Tarjeta padding="chico">
           <button type="button" onClick={salir} className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 text-left text-critical">

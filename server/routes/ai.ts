@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { esFecha } from "../../shared/domain/fechas.js";
 import { aiParseInput, type AiParseDTO } from "../../shared/schemas/api.js";
-import { cuerpo } from "../http.js";
-import { completar, extraerJson } from "../llm.js";
+import { cuerpo, HttpError } from "../http.js";
+import { completarJson } from "../llm.js";
 import { cargarContexto } from "../services/contexto.js";
 import type { AppEnv } from "../tipos-hono.js";
 
@@ -66,7 +66,9 @@ ai.post("/parse", async (c) => {
     `Personas: ${personas.map((x) => x.nombre).join("; ")}`,
   ].join("\n");
 
-  const r = respuesta.parse(extraerJson(await completar({ system, user: texto })));
+  const parseado = respuesta.safeParse(await completarJson({ system, user: texto }));
+  if (!parseado.success) throw new HttpError(503, "La IA no pudo interpretarlo esta vez. Probá de nuevo o cargalo a mano.");
+  const r = parseado.data;
   const monto = r.monto?.replace(/[^\d.]/g, "");
   const etiquetas = r.etiquetas?.map((e) => e.trim().toLowerCase()).filter((e) => e && e.length <= 30).slice(0, 10);
 
