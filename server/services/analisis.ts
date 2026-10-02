@@ -52,6 +52,8 @@ export async function calcularProyeccion(p: PrismaClient, ctx: Contexto, vista: 
       monto,
       duenoId: r.duenoId ?? r.cuenta.titularId,
       cuenta: r.cuenta,
+      variable: r.variable,
+      categoriaId: r.categoriaId,
       frecuencia: r.frecuencia,
       mesAncla: r.mesAncla,
       diaDelMes: r.diaDelMes,
@@ -96,7 +98,7 @@ export async function calcularDashboard(p: PrismaClient, ctx: Contexto, vista: V
   const [movs, categorias, proy] = await Promise.all([
     movimientosCalc(p, ctx, mes, mes),
     p.categoria.findMany({ select: { id: true, padreId: true } }),
-    calcularProyeccion(p, ctx, vista, 3, mesDe(ctx.hoy)),
+    calcularProyeccion(p, ctx, vista, 4, mesDe(ctx.hoy)),
   ]);
   const padre = new Map(categorias.map((c) => [c.id, c.padreId]));
   const raiz = (id: string) => {

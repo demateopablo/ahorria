@@ -10,11 +10,12 @@ import type { Contexto } from "./contexto.js";
  * Genera los movimientos "pendientes de confirmar" de cada recurrencia activa hasta el mes actual.
  * Es idempotente: arranca desde `generadoHasta` y hay un único por (recurrencia, período).
  * Una recurrencia nueva empieza a generar desde el mes en curso (no rellena el pasado).
+ * Las variables (súper, nafta) no generan pendientes: se cargan compra por compra.
  */
 export async function asegurarPendientes(p: PrismaClient, ctx: Contexto): Promise<number> {
   const mesActual = mesDe(ctx.hoy);
   const recs = await p.recurrencia.findMany({
-    where: { activa: true, OR: [{ generadoHasta: null }, { generadoHasta: { lt: mesActual } }] },
+    where: { activa: true, variable: false, OR: [{ generadoHasta: null }, { generadoHasta: { lt: mesActual } }] },
     include: { cuenta: true },
   });
   if (!recs.length) return 0;

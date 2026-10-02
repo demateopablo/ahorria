@@ -139,6 +139,7 @@ export const recurrenciaDTO = (r: Recurrencia): RecurrenciaDTO => ({
   etiquetas: r.etiquetas,
   nota: r.nota,
   activa: r.activa,
+  variable: r.variable,
   montoMensual: montoMensual(dec(r.montoEstimado), r.frecuencia).toString(),
 });
 

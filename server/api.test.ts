@@ -96,9 +96,12 @@ describe.skipIf(!URL_TEST)("API", () => {
       }
     });
 
-    it("/auth/me devuelve a la persona logueada", async () => {
+    it("/auth/me devuelve a la persona logueada (o null sin sesión)", async () => {
       const r = await json<{ persona: { nombre: string } }>(req("GET", "/auth/me"));
       expect(r.persona.nombre).toBe("Ana");
+      const sin = await req("GET", "/auth/me", { quien: null });
+      expect(sin.status).toBe(200);
+      expect(((await sin.json()) as { persona: null }).persona).toBeNull();
     });
   });
 
@@ -125,8 +128,9 @@ describe.skipIf(!URL_TEST)("API", () => {
 
     it("una recurrencia 'de quien pague' queda a nombre de quien confirma", async () => {
       const { movimientos } = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
-      const verdu = movimientos.find((m) => m.concepto === "Verdulería")!;
-      const r = await json<{ movimiento: MovimientoDTO }>(req("POST", `/pendientes/${verdu.id}/confirmar`, { quien: "leo", body: {} }));
+      expect(movimientos.some((m) => m.concepto === "Verdulería")).toBe(false); // variable: sin pendientes
+      const perro = movimientos.find((m) => m.concepto === "Comida del perro")!;
+      const r = await json<{ movimiento: MovimientoDTO }>(req("POST", `/pendientes/${perro.id}/confirmar`, { quien: "leo", body: {} }));
       expect(r.movimiento.duenoId).toBe(ids.Leo);
     });
 

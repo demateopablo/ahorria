@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ahorria
+          POSTGRES_PASSWORD: ahorria
+          POSTGRES_DB: ahorria_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ahorria" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ahorria:ahorria@localhost:5432/ahorria_test
+      TEST_DATABASE_URL: postgresql://ahorria:ahorria@localhost:5432/ahorria_test
+      SESSION_SECRET: secreto-de-ci-secreto-de-ci-secreto
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc -b
+      - run: npm test
+      - run: npx vite build

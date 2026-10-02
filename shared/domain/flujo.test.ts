@@ -211,3 +211,41 @@ describe("proyección de flujo", () => {
     expect(ana[0].transferencias.toString()).toBe("-60000");
   });
 });
+
+describe("recurrencias variables (súper, nafta…)", () => {
+  const billetera = { tipo: "billetera" as const };
+  const tarjeta = { tipo: "tarjeta_credito" as const, diaVencimiento: 10 };
+  const recurrencias: RecurrenciaProyeccion[] = [
+    { id: "super", concepto: "Súper", tipo: "gasto", monto: 400000, duenoId: ANA, cuenta: billetera, frecuencia: "mensual", mesAncla: "2026-01", diaDelMes: 5, variable: true, categoriaId: "super" },
+    { id: "nafta", concepto: "Nafta", tipo: "gasto", monto: 100000, duenoId: LEO, cuenta: tarjeta, frecuencia: "mensual", mesAncla: "2026-01", diaDelMes: 15, variable: true, categoriaId: "nafta" },
+  ];
+  const compra = (fechaImpacto: string, monto: number, categoriaId: string, duenoId = ANA) =>
+    mov({ tipo: "gasto", fechaImpacto, monto: dec(monto), categoriaId, duenoId });
+
+  it("descuenta lo ya cargado en la categoría: no cuenta dos veces", () => {
+    const [oct] = proyectar({ desde: "2026-10", meses: 1, vista: "hogar", umbral: 0, recurrencias: recurrencias.slice(0, 1), movimientos: [compra("2026-10-03", 90000, "super"), compra("2026-10-09", 60000, "super")], eventos: [] });
+    // 150.000 cargados + 250.000 que faltan = el estimado de 400.000
+    expect(oct.variables.toString()).toBe("150000");
+    expect(oct.fijos.toString()).toBe("250000");
+    expect(oct.lineas.find((l) => l.refId === "super")?.monto.toString()).toBe("-250000");
+  });
+
+  it("si ya se gastó más que el estimado, no estima nada (y no resta de más)", () => {
+    const [oct] = proyectar({ desde: "2026-10", meses: 1, vista: "hogar", umbral: 0, recurrencias: recurrencias.slice(0, 1), movimientos: [compra("2026-10-03", 450000, "super")], eventos: [] });
+    expect(oct.variables.toString()).toBe("450000");
+    expect(oct.fijos.isZero()).toBe(true);
+  });
+
+  it("con tarjeta compara por mes de impacto y respeta la vista", () => {
+    // nafta de septiembre con tarjeta impacta en octubre
+    const movs = [compra("2026-10-10", 30000, "nafta", LEO), compra("2026-10-05", 999, "otra")];
+    const [oct] = proyectar({ desde: "2026-10", meses: 1, vista: LEO, umbral: 0, recurrencias, movimientos: movs, eventos: [] });
+    expect(oct.variables.toString()).toBe("30000");
+    expect(oct.fijos.toString()).toBe("70000");
+  });
+
+  it("los meses futuros sin compras estiman el total", () => {
+    const p = proyectar({ desde: "2026-10", meses: 2, vista: "hogar", umbral: 0, recurrencias: recurrencias.slice(0, 1), movimientos: [compra("2026-10-03", 90000, "super")], eventos: [] });
+    expect(p[1].fijos.toString()).toBe("400000");
+  });
+});

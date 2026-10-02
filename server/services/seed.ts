@@ -117,6 +117,7 @@ export async function cargarHousehold(p: PrismaClient, h: Household, hoy: string
         cuentaId: cuentas.get(r.cuenta)!.id,
         etiquetas: r.etiquetas,
         nota: r.nota ?? null,
+        variable: r.variable,
       },
     });
   }

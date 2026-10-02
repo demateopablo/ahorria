@@ -87,6 +87,8 @@ export const householdSchema = z.object({
         etiquetas: z.array(z.string()).default([]),
         reglaAjuste: z.string().optional(),
         nota: z.string().optional(),
+        /** Gasto variable (súper, nafta): se carga compra por compra, sin pendientes. */
+        variable: z.boolean().default(false),
       }),
     )
     .default([]),

@@ -10,5 +10,6 @@ try {
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: { path: "prisma/migrations" },
-  datasource: { url: process.env.DATABASE_URL ?? "" },
+  // Migraciones: en Neon conviene la conexión directa (DIRECT_URL); la app usa la pooled (DATABASE_URL).
+  datasource: { url: process.env.DIRECT_URL || process.env.DATABASE_URL || "" },
 });

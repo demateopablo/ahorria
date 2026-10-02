@@ -130,6 +130,8 @@ export const recurrenciaInput = z
     etiquetas: zEtiquetas,
     nota: z.string().trim().max(500).nullish(),
     activa: z.boolean().default(true),
+    /** Se carga compra por compra: no genera pendientes. */
+    variable: z.boolean().default(false),
   })
   .refine((r) => !r.montoMin || !r.montoMax || Number(r.montoMin) <= Number(r.montoMax), {
     path: ["montoMax"],
@@ -316,6 +318,7 @@ export interface RecurrenciaDTO {
   etiquetas: string[];
   nota: string | null;
   activa: boolean;
+  variable: boolean;
   /** Equivalente mensual (prorrateo). */
   montoMensual: string;
 }
@@ -393,6 +396,7 @@ export interface DashboardDTO {
   top5: TotalCategoriaDTO[];
   hormiga: { categoriaId: string | null; cantidad: number; total: string; promedio: string }[];
   pendientes: { cantidad: number; ingresos: string; gastos: string };
+  /** Proyección desde el mes en curso (el primero es el mes actual). */
   proximos: { mes: Mes; sobra: string; alerta: Alerta }[];
 }
 

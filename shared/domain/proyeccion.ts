@@ -1,5 +1,4 @@
-import type { Decimal } from "decimal.js";
-import { CERO, dec, type MontoInput } from "./dinero.js";
+import { CERO, Decimal, dec, type MontoInput } from "./dinero.js";
 import { mesDe, partesMes, rangoMeses, sumarMeses } from "./fechas.js";
 import { fechaImpacto } from "./impacto.js";
 import { fechaOcurrencia, ocurreEn, type RecurrenciaCalendario } from "./recurrencias.js";
@@ -15,6 +14,12 @@ export interface RecurrenciaProyeccion extends RecurrenciaCalendario {
   /** Dueño efectivo (si la recurrencia es "de quien pague", el titular de la cuenta). */
   duenoId: string;
   cuenta: CuentaImpacto;
+  /**
+   * Gasto variable (súper, nafta…): se carga compra por compra, no genera pendientes.
+   * Lo ya gastado en su categoría ese mes se descuenta del estimado (sin bajar de cero).
+   */
+  variable?: boolean;
+  categoriaId?: string | null;
 }
 
 export interface EventoProyeccion {
@@ -76,6 +81,8 @@ export interface EntradaProyeccion {
  * - Una recurrencia no se cuenta dos veces: si ya hay un movimiento para ese período
  *   (aunque esté omitido), manda el movimiento.
  * - Las transferencias nunca son gasto (ver `efectoEnVista`).
+ * - Una recurrencia variable estima solo lo que falta gastar: estimado − lo cargado en su
+ *   categoría ese mes (los gastos sueltos, no los de otras recurrencias ni cuotas).
  */
 export function proyectar(e: EntradaProyeccion): MesProyeccion[] {
   const meses = rangoMeses(e.desde, e.meses);
@@ -90,6 +97,9 @@ export function proyectar(e: EntradaProyeccion): MesProyeccion[] {
   return meses.map((mes) => {
     const lineas: LineaProyeccion[] = [];
 
+    // Gastos sueltos del mes por categoría: el "pozo" que consumen las recurrencias variables.
+    const sueltos = new Map<string, Decimal>();
+
     for (const m of e.movimientos) {
       if (mesDe(m.fechaImpacto) !== mes) continue;
       const efecto = efectoEnVista(m, e.vista);
@@ -102,6 +112,7 @@ export function proyectar(e: EntradaProyeccion): MesProyeccion[] {
       else {
         const rubro: Rubro = m.planCuotasId ? "cuota" : m.recurrenciaId ? "fijo" : "variable";
         lineas.push({ rubro, origen, concepto, monto: m.monto.negated(), refId: m.id });
+        if (rubro === "variable" && m.categoriaId) sueltos.set(m.categoriaId, (sueltos.get(m.categoriaId) ?? CERO).plus(m.monto));
       }
     }
 
@@ -112,7 +123,14 @@ export function proyectar(e: EntradaProyeccion): MesProyeccion[] {
         if (!ocurreEn(rec, consumo)) continue;
         if (mesDe(fechaImpacto(fechaOcurrencia(rec, consumo), rec.cuenta)) !== mes) continue;
         if (materializados.has(`${rec.id}|${consumo}`)) continue;
-        const monto = dec(rec.monto);
+        let monto = dec(rec.monto);
+        if (rec.variable && rec.tipo === "gasto" && rec.categoriaId) {
+          const gastado = sueltos.get(rec.categoriaId) ?? CERO;
+          const usado = Decimal.min(gastado, monto);
+          sueltos.set(rec.categoriaId, gastado.minus(usado));
+          monto = monto.minus(usado);
+          if (monto.isZero()) continue;
+        }
         lineas.push({
           rubro: rec.tipo === "ingreso" ? "ingreso" : "fijo",
           origen: "estimado",

@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+/*
+ * Ahorria — minimalista y fácil de leer/tocar en el celular.
+ * Un solo acento (verde ahorro). Los gastos van en tinta, no en rojo: el rojo queda
+ * reservado para lo crítico (mes en negativo). Los colores de estado siempre van con ícono + texto.
+ */
+
+:root {
+  color-scheme: light;
+  --bg: #f6f7f5;
+  --surface: #ffffff;
+  --surface-2: #eef1ed;
+  --seg-activo: #ffffff;
+  --ink: #101813;
+  --ink-2: #4a5850;
+  --muted: #76837b;
+  --line: #e2e7e2;
+  --accent: #15803d;
+  --accent-strong: #166534;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcf3e2;
+  --ingreso: #15803d;
+  --warning: #b45309;
+  --warning-fill: #f2a516;
+  --warning-soft: #fdf1d8;
+  --critical: #c62f2f;
+  --critical-soft: #fbe3e1;
+  --bar: #2f8a50;
+  --bar-track: #e4ece6;
+  --overlay: rgb(16 24 19 / 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #0e100f;
+    --surface: #171a18;
+    --surface-2: #20241f;
+    --seg-activo: #353c36;
+    --ink: #eef3ef;
+    --ink-2: #b6c1ba;
+    --muted: #87938c;
+    --line: #2a302c;
+    --accent: #3fbf6c;
+    --accent-strong: #5fd486;
+    --accent-ink: #06210f;
+    --accent-soft: #163322;
+    --ingreso: #4cc777;
+    --warning: #f2a516;
+    --warning-fill: #f2a516;
+    --warning-soft: #33280f;
+    --critical: #ef6a6a;
+    --critical-soft: #3a1b1b;
+    --bar: #3fa865;
+    --bar-track: #233029;
+    --overlay: rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e100f;
+  --surface: #171a18;
+  --surface-2: #20241f;
+  --seg-activo: #353c36;
+  --ink: #eef3ef;
+  --ink-2: #b6c1ba;
+  --muted: #87938c;
+  --line: #2a302c;
+  --accent: #3fbf6c;
+  --accent-strong: #5fd486;
+  --accent-ink: #06210f;
+  --accent-soft: #163322;
+  --ingreso: #4cc777;
+  --warning: #f2a516;
+  --warning-fill: #f2a516;
+  --warning-soft: #33280f;
+  --critical: #ef6a6a;
+  --critical-soft: #3a1b1b;
+  --bar: #3fa865;
+  --bar-track: #233029;
+  --overlay: rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-seg-activo: var(--seg-activo);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-ingreso: var(--ingreso);
+  --color-warning: var(--warning);
+  --color-warning-fill: var(--warning-fill);
+  --color-warning-soft: var(--warning-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-bar: var(--bar);
+  --color-bar-track: var(--bar-track);
+  --color-overlay: var(--overlay);
+}
+
+/* Base en @layer para que las utilidades de Tailwind (también en capa) puedan pisarla. */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    overscroll-behavior-y: none;
+  }
+
+  /* Inputs a 16px: iOS hace zoom con letra más chica. */
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anim-sheet {
+    animation: sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .anim-fade {
+    animation: fade-in 180ms ease-out;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

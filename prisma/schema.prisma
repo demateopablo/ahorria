@@ -202,6 +202,9 @@ model Recurrencia {
   etiquetas     String[]       @default([])
   nota          String?
   activa        Boolean        @default(true)
+  /// Gasto variable (súper, nafta): se carga compra por compra, NO genera pendientes y en la
+  /// proyección solo estima lo que falta gastar en su categoría.
+  variable      Boolean        @default(false)
   /// Último mes para el que ya se generaron pendientes.
   generadoHasta String?
   createdAt     DateTime       @default(now())

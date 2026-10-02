@@ -44,10 +44,10 @@ auth.post("/logout", (c) => {
   return c.json({ ok: true });
 });
 
+/** GET /api/auth/me → { persona } o { persona: null } (200 en ambos casos: no ensucia la consola). */
 auth.get("/me", async (c) => {
   const sesion = await leerSesion(c.req.header("cookie"));
-  if (!sesion) throw new HttpError(401, "Sin sesión");
-  const persona = await c.var.p.persona.findUnique({ where: { id: sesion.personaId } });
-  if (!persona || persona.email !== sesion.email) throw new HttpError(401, "Sin sesión");
+  const persona = sesion ? await c.var.p.persona.findUnique({ where: { id: sesion.personaId } }) : null;
+  if (!persona || persona.email !== sesion?.email) return c.json({ persona: null });
   return c.json({ persona: personaDTO(persona) });
 });
