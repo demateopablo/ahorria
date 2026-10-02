@@ -22,7 +22,8 @@
     "db:studio": "prisma studio",
     "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "assets": "node scripts/build-assets.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "setup": "node scripts/setup.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
