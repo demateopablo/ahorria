@@ -62,7 +62,8 @@ export function Login() {
         client_id: CLIENT_ID,
         callback: ({ credential }) => entrar(() => post("/auth/login", { credential })),
       });
-      gis.renderButton(boton.current, { theme: "outline", size: "large", text: "continue_with", shape: "pill", locale: "es", width: 300 });
+      const oscuro = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      gis.renderButton(boton.current, { theme: oscuro ? "filled_black" : "outline", size: "large", text: "continue_with", shape: "pill", locale: "es", width: 300 });
     };
     intentar();
     return () => {
@@ -83,7 +84,10 @@ export function Login() {
         <p className="mt-2 text-base text-ink-2">Las finanzas de tu hogar, ordenadas: lo que entra, lo que sale y lo que viene.</p>
 
         <div className="mt-8 flex min-h-12 flex-col items-center gap-3">
-          {CLIENT_ID ? <div ref={boton} /> : !opciones?.dev && <Aviso tono="warning">Falta configurar el login con Google (VITE_GOOGLE_CLIENT_ID). Mirá el README.</Aviso>}
+          {CLIENT_ID ? (
+            // color-scheme claro: si no coincide con el del iframe de Google, Chrome le pinta fondo blanco.
+            <div ref={boton} style={{ colorScheme: "light" }} />
+          ) : !opciones?.dev && <Aviso tono="warning">Falta configurar el login con Google (VITE_GOOGLE_CLIENT_ID). Mirá el README.</Aviso>}
           {opciones?.dev && opciones.personas.length > 0 && (
             <div className="w-full space-y-2 rounded-3xl bg-surface p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">Modo desarrollo</p>

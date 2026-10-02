@@ -14,4 +14,4 @@ Fotos de [Unsplash](https://unsplash.com), bajo la [Licencia de Unsplash](https:
 
 - Íconos: [Lucide](https://lucide.dev) (ISC).
 - Tipografía: [Inter](https://rsms.me/inter/) (SIL Open Font License), vía Fontsource.
-- Logo de Ahorria: dibujo propio (MIT, como el resto del proyecto).
+- Logo de Ahorria: moneda con el ₳ (la A del austral), dibujo propio (MIT, como el resto del proyecto).
