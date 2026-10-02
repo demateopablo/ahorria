@@ -91,7 +91,10 @@ Sin `LLM_API_KEY` la app funciona igual; el campo de texto libre no aparece.
 
 1. **Neon** (https://neon.tech, plan gratis): crear proyecto en la región más cercana (Argentina →
    *AWS São Paulo*). Copiar la connection string **pooled** (→ `DATABASE_URL`) y la **directa**
-   (→ `DIRECT_URL`, sin `-pooler` en el host).
+   (→ `DIRECT_URL`, sin `-pooler` en el host). En ambas, cambiar `sslmode=require` por
+   `sslmode=verify-full` (misma seguridad de hoy, sin el aviso de `pg`). Guardalas en
+   `.env.production.local` (gitignoreado) y usalas con `set -a && . ./.env.production.local && set +a`
+   antes de los comandos: las variables del entorno tienen prioridad sobre `.env`.
 2. Migrar y cargar los datos en Neon desde la compu (la persona pega las URLs en la terminal, no en el chat):
    `! DATABASE_URL="<pooled>" DIRECT_URL="<directa>" npx prisma migrate deploy`
    `! DATABASE_URL="<pooled>" npm run seed`
