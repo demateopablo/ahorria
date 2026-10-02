@@ -1,0 +1,48 @@
+/**
+ * Íconos disponibles para categorías y cuentas (nombres estables; el front los mapea a lucide).
+ * Si agregás uno, sumalo también en `src/components/Icono.tsx`.
+ */
+export const ICONOS = [
+  "circle",
+  "home",
+  "zap",
+  "flame",
+  "droplet",
+  "hammer",
+  "trees",
+  "car",
+  "fuel",
+  "utensils",
+  "cart",
+  "carrot",
+  "beef",
+  "candy",
+  "pizza",
+  "baby",
+  "paw",
+  "heart-pulse",
+  "user",
+  "dumbbell",
+  "repeat",
+  "smartphone",
+  "users",
+  "gift",
+  "plane",
+  "alert",
+  "credit-card",
+  "store",
+  "wallet",
+  "banknote",
+  "landmark",
+  "trending-up",
+  "briefcase",
+  "sparkles",
+  "shirt",
+  "graduation-cap",
+  "bus",
+  "film",
+  "coffee",
+  "shield",
+] as const;
+
+export type Icono = (typeof ICONOS)[number];

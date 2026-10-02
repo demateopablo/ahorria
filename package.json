@@ -1,0 +1,63 @@
+{
+  "name": "ahorria",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Finanzas familiares, ordenadas con IA. Self-hosted: cada hogar levanta su propia instancia.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n web,api -c green,blue \"vite\" \"tsx watch --env-file-if-exists=.env server/dev.ts\"",
+    "build": "prisma generate && tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
+    "assets": "node scripts/build-assets.mjs",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@hono/node-server": "^2.1.3",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@tanstack/react-query": "^5.104.1",
+    "decimal.js": "^10.6.0",
+    "google-auth-library": "^11.1.0",
+    "hono": "^4.13.12",
+    "jose": "^6.2.12",
+    "lucide-react": "^1.50.0",
+    "pg": "^8.16.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.19.1",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
+    "oxlint": "^1.86.0",
+    "prisma": "7.10.0",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.2",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^5.0.3"
+  }
+}

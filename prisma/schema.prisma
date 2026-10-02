@@ -1,0 +1,257 @@
+// Ahorria: un hogar por instancia. Todos los montos son Decimal(14,2): nunca float.
+// Las fechas de calendario se guardan como DATE (sin hora ni zona).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../server/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Moneda {
+  ARS
+  USD
+}
+
+enum TipoCuenta {
+  efectivo
+  billetera
+  banco
+  tarjeta_credito
+  inversion
+}
+
+enum TipoMovimiento {
+  ingreso
+  gasto
+  transferencia
+}
+
+enum TipoCategoria {
+  gasto
+  ingreso
+}
+
+enum Ambito {
+  personal
+  compartido
+  negocio
+  familia
+}
+
+enum EstadoMovimiento {
+  confirmado
+  pendiente
+  omitido
+}
+
+enum Frecuencia {
+  mensual
+  bimestral
+  trimestral
+  semestral
+  anual
+}
+
+enum TipoCotizacion {
+  oficial
+  mep
+}
+
+/// Fila única (id = 1) con la configuración del hogar.
+model Config {
+  id               Int     @id @default(1)
+  nombreHogar      String
+  monedaBase       Moneda  @default(ARS)
+  locale           String  @default("es-AR")
+  timezone         String  @default("America/Argentina/Buenos_Aires")
+  /// Sobra mensual por debajo de la cual la proyección marca el mes en ámbar.
+  umbralMargenBajo Decimal @default(0) @db.Decimal(14, 2)
+}
+
+model Persona {
+  id     String  @id @default(cuid())
+  nombre String
+  /// Si tiene email, puede iniciar sesión con Google: es la lista de acceso.
+  email  String? @unique
+  color  String  @default("#16a34a")
+  orden  Int     @default(0)
+
+  cuentas      Cuenta[]
+  movimientos  Movimiento[]  @relation("MovimientoDueno")
+  cargados     Movimiento[]  @relation("MovimientoCreadoPor")
+  recurrencias Recurrencia[]
+  planesCuotas PlanCuotas[]
+  eventos      Evento[]
+}
+
+model Cuenta {
+  id                String     @id @default(cuid())
+  nombre            String
+  tipo              TipoCuenta
+  moneda            Moneda     @default(ARS)
+  titularId         String
+  titular           Persona    @relation(fields: [titularId], references: [id])
+  saldoInicial      Decimal    @default(0) @db.Decimal(14, 2)
+  fechaSaldoInicial DateTime?  @db.Date
+  /// Tasa nominal anual en % (ej. 19.00), para rendimiento.
+  tna               Decimal?   @db.Decimal(7, 2)
+  /// Tarjetas: día de cierre del resumen y de vencimiento (para la fecha de impacto).
+  diaCierre         Int?
+  diaVencimiento    Int?
+  orden             Int        @default(0)
+  archivada         Boolean    @default(false)
+
+  movimientos      Movimiento[]  @relation("MovimientoCuenta")
+  transferenciasIn Movimiento[]  @relation("MovimientoCuentaDestino")
+  recurrencias     Recurrencia[]
+  planesCuotas     PlanCuotas[]
+}
+
+model Categoria {
+  id            String        @id @default(cuid())
+  nombre        String
+  tipo          TipoCategoria @default(gasto)
+  padreId       String?
+  padre         Categoria?    @relation("Subcategorias", fields: [padreId], references: [id])
+  hijas         Categoria[]   @relation("Subcategorias")
+  /// Nombre de un ícono de la app (ej. "cart").
+  icono         String        @default("circle")
+  color         String        @default("#64748b")
+  /// Ámbito que se propone al cargar un movimiento de esta categoría.
+  ambitoDefault Ambito        @default(compartido)
+  orden         Int           @default(0)
+  archivada     Boolean       @default(false)
+
+  movimientos  Movimiento[]
+  recurrencias Recurrencia[]
+  planesCuotas PlanCuotas[]
+  eventos      Evento[]
+}
+
+model Movimiento {
+  id              String           @id @default(cuid())
+  tipo            TipoMovimiento
+  estado          EstadoMovimiento @default(confirmado)
+  monto           Decimal          @db.Decimal(14, 2)
+  moneda          Moneda           @default(ARS)
+  /// Pesos por dólar del día, para movimientos en USD.
+  cotizacion      Decimal?         @db.Decimal(14, 4)
+  fechaConsumo    DateTime         @db.Date
+  /// Cuándo impacta en el flujo (tarjetas: a mes vencido).
+  fechaImpacto    DateTime         @db.Date
+  categoriaId     String?
+  categoria       Categoria?       @relation(fields: [categoriaId], references: [id])
+  duenoId         String
+  dueno           Persona          @relation("MovimientoDueno", fields: [duenoId], references: [id])
+  ambito          Ambito           @default(compartido)
+  /// Cuenta de la que sale (gasto/transferencia) o a la que entra (ingreso).
+  cuentaId        String
+  cuenta          Cuenta           @relation("MovimientoCuenta", fields: [cuentaId], references: [id])
+  /// Solo transferencias.
+  cuentaDestinoId String?
+  cuentaDestino   Cuenta?          @relation("MovimientoCuentaDestino", fields: [cuentaDestinoId], references: [id])
+  nota            String?
+  etiquetas       String[]         @default([])
+  recurrenciaId   String?
+  recurrencia     Recurrencia?     @relation(fields: [recurrenciaId], references: [id], onDelete: SetNull)
+  /// Mes de consumo ("2026-10") que cubre un movimiento generado por una recurrencia.
+  periodo         String?
+  planCuotasId    String?
+  planCuotas      PlanCuotas?      @relation(fields: [planCuotasId], references: [id], onDelete: SetNull)
+  numeroCuota     Int?
+  creadoPorId     String?
+  creadoPor       Persona?         @relation("MovimientoCreadoPor", fields: [creadoPorId], references: [id])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([recurrenciaId, periodo])
+  @@index([fechaImpacto])
+  @@index([estado])
+}
+
+model Recurrencia {
+  id            String         @id @default(cuid())
+  concepto      String
+  /// ingreso o gasto (no transferencia).
+  tipo          TipoMovimiento
+  montoEstimado Decimal        @db.Decimal(14, 2)
+  montoMin      Decimal?       @db.Decimal(14, 2)
+  montoMax      Decimal?       @db.Decimal(14, 2)
+  moneda        Moneda         @default(ARS)
+  frecuencia    Frecuencia     @default(mensual)
+  /// Un mes en el que ocurre ("2026-10"): fija la fase de bimestrales, trimestrales, etc.
+  mesAncla      String
+  diaDelMes     Int            @default(1)
+  desde         DateTime?      @db.Date
+  fechaFin      DateTime?      @db.Date
+  /// Texto libre en Fase 1 (ej. "ICL trimestral").
+  reglaAjuste   String?
+  categoriaId   String?
+  categoria     Categoria?     @relation(fields: [categoriaId], references: [id])
+  /// null = "la paga quien pase": al confirmar queda a nombre de quien confirma.
+  duenoId       String?
+  dueno         Persona?       @relation(fields: [duenoId], references: [id])
+  ambito        Ambito         @default(compartido)
+  cuentaId      String
+  cuenta        Cuenta         @relation(fields: [cuentaId], references: [id])
+  etiquetas     String[]       @default([])
+  nota          String?
+  activa        Boolean        @default(true)
+  /// Último mes para el que ya se generaron pendientes.
+  generadoHasta String?
+  createdAt     DateTime       @default(now())
+
+  movimientos Movimiento[]
+}
+
+model PlanCuotas {
+  id                  String     @id @default(cuid())
+  descripcion         String
+  montoCuota          Decimal    @db.Decimal(14, 2)
+  /// Cuotas materializadas por este plan.
+  cantidadCuotas      Int
+  /// Si el plan se cargó empezado: cuántas se pagaron antes (para mostrar "5/12").
+  cuotasPrevias       Int        @default(0)
+  primeraFechaImpacto DateTime   @db.Date
+  fechaCompra         DateTime?  @db.Date
+  cuentaId            String
+  cuenta              Cuenta     @relation(fields: [cuentaId], references: [id])
+  categoriaId         String?
+  categoria           Categoria? @relation(fields: [categoriaId], references: [id])
+  duenoId             String
+  dueno               Persona    @relation(fields: [duenoId], references: [id])
+  ambito              Ambito     @default(compartido)
+  createdAt           DateTime   @default(now())
+
+  movimientos Movimiento[]
+}
+
+model Evento {
+  id                 String     @id @default(cuid())
+  nombre             String
+  /// 1–12
+  mes                Int
+  dia                Int?
+  montoPresupuestado Decimal    @db.Decimal(14, 2)
+  categoriaId        String?
+  categoria          Categoria? @relation(fields: [categoriaId], references: [id])
+  /// null = del hogar.
+  duenoId            String?
+  dueno              Persona?   @relation(fields: [duenoId], references: [id])
+  activo             Boolean    @default(true)
+}
+
+model Cotizacion {
+  id    String         @id @default(cuid())
+  fecha DateTime       @db.Date
+  tipo  TipoCotizacion @default(oficial)
+  /// Pesos por dólar.
+  valor Decimal        @db.Decimal(14, 4)
+
+  @@unique([fecha, tipo])
+}

@@ -1,0 +1,70 @@
+{
+  "hogar": { "nombre": "Casa de Ana y Leo", "umbralMargenBajo": 250000 },
+  "personas": [
+    { "nombre": "Ana", "email": "ana@example.com" },
+    { "nombre": "Leo", "email": "leo@example.com" }
+  ],
+  "categorias": [
+    { "nombre": "Ingresos", "tipo": "ingreso", "icono": "banknote", "subcategorias": [
+      { "nombre": "Sueldo", "icono": "briefcase" },
+      { "nombre": "Aguinaldo", "icono": "sparkles" },
+      { "nombre": "Otros ingresos", "icono": "trending-up" }
+    ] },
+    { "nombre": "Vivienda", "icono": "home" },
+    { "nombre": "Servicios", "icono": "zap" },
+    { "nombre": "Auto", "icono": "car", "subcategorias": [
+      { "nombre": "Nafta", "icono": "fuel" },
+      { "nombre": "Seguro del auto", "icono": "shield" }
+    ] },
+    { "nombre": "Comida", "icono": "utensils", "subcategorias": [
+      { "nombre": "Súper", "icono": "cart" },
+      { "nombre": "Verdulería", "icono": "carrot" },
+      { "nombre": "Gustitos", "icono": "candy" },
+      { "nombre": "Delivery y salidas", "icono": "pizza" }
+    ] },
+    { "nombre": "Mascotas", "icono": "paw" },
+    { "nombre": "Salud", "icono": "heart-pulse" },
+    { "nombre": "Personales", "icono": "user", "ambito": "personal" },
+    { "nombre": "Suscripciones", "icono": "repeat" },
+    { "nombre": "Eventos y regalos", "icono": "gift" },
+    { "nombre": "Viajes", "icono": "plane" },
+    { "nombre": "Imprevistos", "icono": "alert" },
+    { "nombre": "Deudas y cuotas", "icono": "credit-card" }
+  ],
+  "cuentas": [
+    { "nombre": "Billetera virtual", "tipo": "billetera", "titular": "Ana", "saldoInicial": 600000, "tna": 30 },
+    { "nombre": "Caja en dólares", "tipo": "banco", "moneda": "USD", "titular": "Ana", "saldoInicial": 1500 },
+    { "nombre": "Tarjeta Ana", "tipo": "tarjeta_credito", "titular": "Ana", "diaCierre": 24, "diaVencimiento": 5 },
+    { "nombre": "Tarjeta Leo", "tipo": "tarjeta_credito", "titular": "Leo" },
+    { "nombre": "Efectivo", "tipo": "efectivo", "titular": "Ana" }
+  ],
+  "recurrencias": [
+    { "concepto": "Sueldo", "tipo": "ingreso", "monto": 1800000, "dia": 3, "dueno": "Ana", "ambito": "personal", "cuenta": "Billetera virtual", "categoria": "Sueldo", "reglaAjuste": "Paritaria trimestral" },
+    { "concepto": "Aguinaldo", "tipo": "ingreso", "monto": 900000, "frecuencia": "semestral", "mesAncla": "2026-12", "dia": 18, "dueno": "Ana", "ambito": "personal", "cuenta": "Billetera virtual", "categoria": "Aguinaldo" },
+    { "concepto": "Alquiler", "monto": 550000, "dia": 5, "dueno": "Ana", "cuenta": "Billetera virtual", "categoria": "Vivienda", "reglaAjuste": "ICL cada 6 meses" },
+    { "concepto": "Luz", "monto": 40000, "dia": 12, "dueno": "Ana", "cuenta": "Billetera virtual", "categoria": "Servicios" },
+    { "concepto": "Internet", "monto": 28000, "dia": 10, "dueno": "Ana", "cuenta": "Tarjeta Ana", "categoria": "Servicios" },
+    { "concepto": "Expensas", "monto": 95000, "frecuencia": "bimestral", "dia": 10, "dueno": "Ana", "cuenta": "Billetera virtual", "categoria": "Vivienda" },
+    { "concepto": "Seguro del auto", "monto": 60000, "dia": 15, "dueno": "Leo", "ambito": "personal", "cuenta": "Tarjeta Leo", "categoria": "Seguro del auto" },
+    { "concepto": "Nafta", "monto": 70000, "dia": 20, "dueno": "Leo", "ambito": "personal", "cuenta": "Tarjeta Leo", "categoria": "Nafta" },
+    { "concepto": "Súper", "monto": 320000, "montoMin": 280000, "montoMax": 380000, "dia": 8, "dueno": "Ana", "cuenta": "Billetera virtual", "categoria": "Súper" },
+    { "concepto": "Verdulería", "monto": 35000, "dia": 15, "dueno": null, "cuenta": "Efectivo", "categoria": "Verdulería", "nota": "La paga quien pase" },
+    { "concepto": "Comida del perro", "monto": 45000, "dia": 1, "dueno": "Ana", "cuenta": "Billetera virtual", "categoria": "Mascotas" },
+    { "concepto": "Streaming", "monto": 12, "moneda": "USD", "dia": 20, "dueno": "Ana", "cuenta": "Tarjeta Ana", "categoria": "Suscripciones" },
+    { "concepto": "Gimnasio Leo", "monto": 30000, "dia": 5, "dueno": "Leo", "ambito": "personal", "cuenta": "Tarjeta Leo", "categoria": "Personales" }
+  ],
+  "cuotas": [
+    { "descripcion": "Heladera", "montoCuota": 48500, "cantidad": 12, "fechaCompra": "2026-09-14", "cuenta": "Tarjeta Ana", "categoria": "Vivienda", "dueno": "Ana" },
+    { "descripcion": "Préstamo personal", "montoCuota": 62000, "ultimaCuota": "2027-02", "cuenta": "Billetera virtual", "categoria": "Deudas y cuotas", "dueno": "Ana" },
+    { "descripcion": "Zapatillas", "montoCuota": 21000, "cantidad": 3, "fechaCompra": "2026-10-02", "cuenta": "Tarjeta Leo", "categoria": "Personales", "dueno": "Leo", "ambito": "personal" }
+  ],
+  "eventos": [
+    { "nombre": "Día de la Madre", "mes": 10, "dia": 18, "monto": 50000, "categoria": "Eventos y regalos" },
+    { "nombre": "Cumple de Leo", "mes": 11, "dia": 7, "monto": 60000, "categoria": "Eventos y regalos", "dueno": "Ana" },
+    { "nombre": "Fiestas de fin de año", "mes": 12, "monto": 250000, "categoria": "Eventos y regalos" },
+    { "nombre": "Vacaciones", "mes": 1, "monto": 800000, "categoria": "Viajes" }
+  ],
+  "cotizaciones": [
+    { "fecha": "2026-10-01", "tipo": "oficial", "valor": 1400 }
+  ]
+}

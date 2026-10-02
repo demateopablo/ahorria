@@ -1,0 +1,15 @@
+# Postgres local para desarrollo y tests. En producción se usa Neon.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ahorria
+      POSTGRES_PASSWORD: ahorria
+      POSTGRES_DB: ahorria
+    ports:
+      - "54329:5432"
+    volumes:
+      - ahorria-db:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+volumes:
+  ahorria-db:

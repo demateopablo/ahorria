@@ -1,24 +1,26 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+node_modules
+dist
+dev-dist
+*.tsbuildinfo
+.vercel
 
-# Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+# Prisma client generado (se regenera en postinstall)
+server/generated
 
-# dotenv environment variable files
+# Variables de entorno: NUNCA commitear (salvo el ejemplo)
 .env
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
-# temp directory
-.temp
-.tmp
+# Datos reales del hogar: NUNCA commitear
+*.local.json
+*.local.*
+
+# Herramientas
+.playwright-mcp
+test-results
+playwright-report
+brag-output*
+coverage
+*.log
+.DS_Store
