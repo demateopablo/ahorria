@@ -1,0 +1,12 @@
+# Nunca subir secretos ni datos reales en un deploy desde la CLI
+.env*
+!.env.example
+*.local.*
+.vercel
+node_modules
+dist
+dev-dist
+server/generated
+.playwright-mcp
+test-results
+coverage

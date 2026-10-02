@@ -31,7 +31,15 @@ export function crearApp(prisma: () => PrismaClient = db) {
     return next();
   });
 
-  app.get("/health", (c) => c.json({ ok: true }));
+  /** Estado de la API y de la conexión a la base (sin datos: solo si responde). */
+  app.get("/health", async (c) => {
+    try {
+      await c.var.p.$queryRaw`SELECT 1`;
+      return c.json({ ok: true, db: true });
+    } catch {
+      return c.json({ ok: false, db: false }, 503);
+    }
+  });
   app.route("/auth", auth);
   app.route("/", catalogo);
   app.route("/movimientos", movimientos);
