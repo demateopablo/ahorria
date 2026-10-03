@@ -97,3 +97,24 @@ export async function reubicarPeriodo(
   }
   return { periodo: nuevo, antes, despues };
 }
+
+/**
+ * Al editar una recurrencia, sus pendientes sin confirmar toman la plantilla nueva (día, monto,
+ * cuenta…): si no, quedaba el día viejo y se confirmaba con esa fecha. Los que dejan de corresponder
+ * (otra frecuencia, pausada o pasada a variable) se borran. Lo confirmado u omitido no se toca.
+ */
+export async function sincronizarPendientes(p: PrismaClient, recurrenciaId: string, ctx: Contexto) {
+  const r = await p.recurrencia.findUnique({ where: { id: recurrenciaId }, include: { cuenta: true } });
+  if (!r) return;
+  const pendientes = await p.movimiento.findMany({ where: { recurrenciaId, estado: "pendiente" } });
+  const sigue = (periodo: string | null) => periodo && r.activa && !r.variable && ocurreEn(calendario(r), periodo);
+  await p.$transaction([
+    p.movimiento.deleteMany({ where: { id: { in: pendientes.filter((m) => !sigue(m.periodo)).map((m) => m.id) } } }),
+    ...pendientes
+      .filter((m) => sigue(m.periodo))
+      .map((m) => {
+        const { estado: _e, recurrenciaId: _r, periodo: _p, ...datos } = pendienteDe(r, m.periodo!, ctx);
+        return p.movimiento.update({ where: { id: m.id }, data: datos });
+      }),
+  ]);
+}

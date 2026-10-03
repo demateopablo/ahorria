@@ -8,6 +8,7 @@ import { cuerpo, HttpError, validar } from "../http.js";
 import { calcularDashboard, calcularProyeccion, validarVista } from "../services/analisis.js";
 import { cargarContexto } from "../services/contexto.js";
 import { crearPlanCuotas, eliminarPlanCuotas } from "../services/cuotas.js";
+import { sincronizarPendientes } from "../services/pendientes.js";
 import type { AppEnv } from "../tipos-hono.js";
 
 // ─── Recurrencias ────────────────────────────────────────────────────────
@@ -52,13 +53,14 @@ recurrencias.post("/", async (c) => {
   return c.json({ recurrencia: recurrenciaDTO(r) }, 201);
 });
 
-/** PUT reemplaza la plantilla. Los pendientes ya generados no cambian (se editan al confirmar). */
+/** PUT reemplaza la plantilla y actualiza los pendientes sin confirmar (lo confirmado no cambia). */
 recurrencias.put("/:id", async (c) => {
   const d = await cuerpo(c, recurrenciaInput);
   await validarRefsRecurrencia(c, d);
   const id = c.req.param("id");
   if (!(await c.var.p.recurrencia.findUnique({ where: { id } }))) throw new HttpError(404, "No existe la recurrencia");
   const r = await c.var.p.recurrencia.update({ where: { id }, data: datosRecurrencia(d) });
+  await sincronizarPendientes(c.var.p, id, await cargarContexto(c.var.p));
   return c.json({ recurrencia: recurrenciaDTO(r) });
 });
 

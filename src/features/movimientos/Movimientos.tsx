@@ -10,6 +10,7 @@ import { mensajeError, post } from "@/lib/api";
 import { useEscritura, useMovimientos } from "@/lib/datos";
 import { formatFecha, formatMes } from "@shared/format";
 import { sumarMeses } from "@shared/domain/fechas";
+import { resumenTarjeta } from "@shared/domain/impacto";
 import type { MovimientoDTO } from "@shared/schemas/api";
 import { useCarga } from "../carga/Carga";
 
@@ -143,6 +144,9 @@ function Fila({ m, onClick }: { m: MovimientoDTO; onClick: () => void }) {
     .filter(Boolean)
     .join(" · ");
   const valor = m.tipo === "ingreso" ? m.monto : esTransferencia ? m.monto : `-${m.monto}`;
+  // El cierre se deduce de la fecha de compra; en cuotas solo vale para la primera, así que ahí no se muestra.
+  const resumen = cuenta?.tipo === "tarjeta_credito" && !m.planCuotasId ? resumenTarjeta(m.fechaConsumo, cuenta) : null;
+  const cierre = resumen?.vencimiento === m.fechaImpacto ? resumen.cierre : null;
 
   return (
     <li className="border-b border-line last:border-0">
@@ -173,9 +177,10 @@ function Fila({ m, onClick }: { m: MovimientoDTO; onClick: () => void }) {
             className={cx("block text-sm font-semibold", m.tipo === "ingreso" && "text-ingreso", esTransferencia && "text-ink-2")}
           />
           {m.estado === "pendiente" && <span className="text-[11px] font-semibold text-warning">Pendiente</span>}
-          {m.estado === "confirmado" && m.fechaImpacto.slice(0, 7) !== m.fechaConsumo.slice(0, 7) && (
+          {cuenta?.tipo === "tarjeta_credito" && m.tipo === "gasto" && (
             <span className="flex items-center justify-end gap-0.5 text-[11px] text-muted">
-              <Icono nombre="credit-card" size={11} /> impacta {formatMes(m.fechaImpacto.slice(0, 7), true)}
+              <Icono nombre="credit-card" size={11} />
+              {cierre && `cierra ${formatFecha(cierre, true)} · `}paga {formatFecha(m.fechaImpacto, true)}
             </span>
           )}
         </span>

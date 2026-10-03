@@ -13,6 +13,18 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>Ahorria</title>
+    <script>
+      // Tema elegido a mano (Más → Tema), antes de pintar para que no parpadee. Ver src/lib/tema.ts.
+      try {
+        var t = localStorage.getItem("ahorria-tema");
+        if (t === "light" || t === "dark") {
+          document.documentElement.dataset.theme = t;
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+            m.content = t === "dark" ? "#0e100f" : "#f6f7f5";
+          });
+        }
+      } catch (e) {}
+    </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>

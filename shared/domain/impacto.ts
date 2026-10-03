@@ -17,8 +17,16 @@ export const VENCIMIENTO_POR_DEFECTO = 10;
  */
 export function fechaImpacto(fechaConsumo: Fecha, cuenta: CuentaImpacto): Fecha {
   if (cuenta.tipo !== "tarjeta_credito") return fechaConsumo;
+  return resumenTarjeta(fechaConsumo, cuenta).vencimiento;
+}
+
+/** El resumen en el que entra un consumo con tarjeta: cuándo cierra (si se sabe) y cuándo vence. */
+export function resumenTarjeta(fechaConsumo: Fecha, cuenta: CuentaImpacto): { cierre: Fecha | null; vencimiento: Fecha } {
   const vencimiento = cuenta.diaVencimiento ?? VENCIMIENTO_POR_DEFECTO;
-  if (cuenta.diaCierre == null) return fechaEnMes(sumarMeses(mesDe(fechaConsumo), 1), vencimiento);
+  if (cuenta.diaCierre == null) return { cierre: null, vencimiento: fechaEnMes(sumarMeses(mesDe(fechaConsumo), 1), vencimiento) };
   const mesCierre = sumarMeses(mesDe(fechaConsumo), diaDe(fechaConsumo) > cuenta.diaCierre ? 1 : 0);
-  return fechaEnMes(sumarMeses(mesCierre, vencimiento > cuenta.diaCierre ? 0 : 1), vencimiento);
+  return {
+    cierre: fechaEnMes(mesCierre, cuenta.diaCierre),
+    vencimiento: fechaEnMes(sumarMeses(mesCierre, vencimiento > cuenta.diaCierre ? 0 : 1), vencimiento),
+  };
 }

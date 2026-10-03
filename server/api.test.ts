@@ -168,6 +168,17 @@ describe.skipIf(!URL_TEST)("API", () => {
       expect(final.movimientos.filter((m) => m.concepto === "Seguro del auto").map((m) => m.id)).toEqual([seguro.id]);
     });
 
+    it("editar un fijo actualiza su pendiente sin confirmar; pausarlo lo saca", async () => {
+      const { recurrencias } = await json<{ recurrencias: (Record<string, unknown> & { id: string; concepto: string })[] }>(req("GET", "/recurrencias"));
+      const { id, montoMensual: _, ...gym } = recurrencias.find((r) => r.concepto === "Gimnasio Leo")!;
+      expect((await req("PUT", `/recurrencias/${id}`, { body: { ...gym, diaDelMes: 7, montoEstimado: "33000" } })).status).toBe(200);
+      const pendiente = async () => (await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"))).movimientos.find((m) => m.recurrenciaId === id);
+      expect(await pendiente()).toMatchObject({ monto: "33000", fechaConsumo: `${hoy.slice(0, 7)}-07` });
+
+      await req("PUT", `/recurrencias/${id}`, { body: { ...gym, activa: false } });
+      expect(await pendiente()).toBeUndefined();
+    });
+
     it("un omitido se puede deshacer; un pendiente no", async () => {
       const { movimientos } = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
       const internet = movimientos.find((m) => m.concepto === "Internet")!;

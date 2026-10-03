@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { cuotaDelMes, cuotasRestantes, impactosCuotas } from "./cuotas.js";
 import { aMonedaBase, centavos, dec, porcentaje, sumar } from "./dinero.js";
 import { difMeses, esFecha, esMes, fechaEnMes, hoy, rangoMeses, sumarMeses, sumarMesesFecha } from "./fechas.js";
-import { fechaImpacto } from "./impacto.js";
+import { fechaImpacto, resumenTarjeta } from "./impacto.js";
 import { montoMensual, ocurreEn, periodos, prorrateoTotal } from "./recurrencias.js";
 
 describe("fechas", () => {
@@ -81,6 +81,12 @@ describe("fecha de impacto", () => {
     expect(fechaImpacto("2026-10-01", tarjeta)).toBe("2026-10-14");
     expect(fechaImpacto("2026-10-03", tarjeta)).toBe("2026-11-14");
     expect(fechaImpacto("2026-09-25", tarjeta)).toBe("2026-10-14");
+  });
+
+  it("dice en qué resumen entra: cierre y vencimiento", () => {
+    expect(resumenTarjeta("2026-10-03", { tipo: "tarjeta_credito", diaCierre: 1, diaVencimiento: 14 })).toEqual({ cierre: "2026-11-01", vencimiento: "2026-11-14" });
+    expect(resumenTarjeta("2026-10-23", { tipo: "tarjeta_credito", diaCierre: 22, diaVencimiento: 2 })).toEqual({ cierre: "2026-11-22", vencimiento: "2026-12-02" });
+    expect(resumenTarjeta("2026-10-23", { tipo: "tarjeta_credito" })).toEqual({ cierre: null, vencimiento: "2026-11-10" });
   });
 });
 

@@ -1,9 +1,11 @@
-import { CalendarHeart, ChevronRight, CreditCard, DollarSign, Home, LogOut, Repeat, Sparkles, Tags, Users, Wallet } from "lucide-react";
+import { CalendarHeart, ChevronRight, CreditCard, DollarSign, Home, LogOut, Palette, Repeat, Sparkles, Tags, Users, Wallet } from "lucide-react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { useHogar } from "@/app/hogar";
-import { Tarjeta } from "@/components/ui";
+import { Segmentado, Tarjeta } from "@/components/ui";
 import { post } from "@/lib/api";
+import { aplicarTema, leerTema, type Tema } from "@/lib/tema";
 
 const SECCIONES = [
   { to: "/mas/recurrencias", label: "Gastos e ingresos fijos", detalle: "Sueldo, alquiler, servicios…", Icono: Repeat },
@@ -19,6 +21,7 @@ const SECCIONES = [
 export function Mas() {
   const h = useHogar();
   const qc = useQueryClient();
+  const [tema, setTema] = useState(leerTema);
 
   async function salir() {
     await post("/auth/logout").catch(() => {});
@@ -68,6 +71,29 @@ export function Mas() {
                 : "La API key no se carga desde la app (sería un secreto guardado en la base): se configura en el servidor con LLM_API_KEY, LLM_BASE_URL y LLM_MODEL. Instrucciones en el README."}
             </p>
           </details>
+        </Tarjeta>
+        <Tarjeta padding="chico">
+          <div className="flex min-h-14 items-center gap-3 px-3">
+            <span className="flex size-10 items-center justify-center rounded-full bg-surface-2 text-ink-2">
+              <Palette size={20} aria-hidden />
+            </span>
+            <span className="block text-base font-medium">Tema</span>
+          </div>
+          <div className="px-3 pb-2">
+            <Segmentado<Tema>
+              etiqueta="Tema"
+              opciones={[
+                { valor: "sistema", label: "Automático" },
+                { valor: "light", label: "Claro" },
+                { valor: "dark", label: "Oscuro" },
+              ]}
+              valor={tema}
+              onChange={(t) => {
+                aplicarTema(t);
+                setTema(t);
+              }}
+            />
+          </div>
         </Tarjeta>
         <Tarjeta padding="chico">
           <button type="button" onClick={salir} className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 text-left text-critical">

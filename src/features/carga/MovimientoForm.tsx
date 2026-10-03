@@ -1,4 +1,4 @@
-import { ChevronDown, LayoutGrid, Sparkles } from "lucide-react";
+import { ChevronDown, CreditCard, LayoutGrid, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { HOGAR, useHogar } from "@/app/hogar";
 import { IconoCategoria } from "@/components/Icono";
@@ -8,6 +8,7 @@ import { Boton, Campo, cx, Input, Segmentado, Select, Textarea } from "@/compone
 import { del, mensajeError, patch, post } from "@/lib/api";
 import { useEscritura } from "@/lib/datos";
 import { formatFecha, parseMontoAR } from "@shared/format";
+import { textoResumen } from "@/lib/tarjeta";
 import { AMBITOS, type Ambito, type Moneda, type TipoMovimiento } from "@shared/domain/tipos";
 import type { AiParseDTO, CategoriaDTO, MovimientoDTO } from "@shared/schemas/api";
 import { aplicarTecla, montoATexto, mostrarMontoTipeado, Teclado } from "./Teclado";
@@ -82,6 +83,7 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
   const categoria = h.categoria(categoriaId);
   const ambitoEfectivo: Ambito = ambito ?? categoria?.ambitoDefault ?? "compartido";
   const cuenta = h.cuenta(cuentaId);
+  const resumen = textoResumen(fecha, cuenta);
 
   function elegirCategoria(id: string) {
     setCategoriaId(id);
@@ -278,6 +280,11 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
           Más opciones
         </button>
       </div>
+      {tipo === "gasto" && resumen && (
+        <p className="flex items-center justify-center gap-1.5 text-center text-xs text-ink-2">
+          <CreditCard size={14} className="shrink-0" aria-hidden /> {resumen}
+        </p>
+      )}
 
       {tipo !== "transferencia" && (
         <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Categoría">
@@ -332,7 +339,7 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
           </Campo>
           <Campo
             label={tipo === "transferencia" ? "Desde" : tipo === "ingreso" ? "Entra en" : "Pagado con"}
-            ayuda={cuenta?.tipo === "tarjeta_credito" ? "Con tarjeta, impacta en el resumen del mes siguiente." : undefined}
+            ayuda={tipo === "gasto" ? (resumen ?? undefined) : undefined}
           >
             <Select value={cuentaId} onChange={(e) => elegirCuenta(e.target.value)}>
               {h.cuentasActivas.map((c) => (
