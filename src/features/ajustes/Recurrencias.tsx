@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useHogar } from "@/app/hogar";
 import { IconoCategoria } from "@/components/Icono";
-import { Aviso, Campo, Cargando, cx, Input, Interruptor, Monto, Segmentado, Select, Tarjeta, Textarea } from "@/components/ui";
+import { Aviso, Buscador, Campo, Cargando, coincide, cx, Input, Interruptor, Monto, Segmentado, Select, Tarjeta, Textarea } from "@/components/ui";
 import { del, post, put } from "@/lib/api";
 import { useRecurrencias } from "@/lib/datos";
 import { dec, sumar } from "@shared/domain/dinero";
@@ -11,12 +11,32 @@ import { aTexto, HojaEditor, montoONull, NOMBRE_AMBITO, PantallaAjuste, SelectCa
 
 const NOMBRE_FRECUENCIA: Record<Frecuencia, string> = { mensual: "Mensual", bimestral: "Bimestral", trimestral: "Trimestral", semestral: "Semestral", anual: "Anual" };
 
+type Filtro = "todos" | "fijos" | "variables" | "pausados";
+const FILTROS: Record<Filtro, (r: RecurrenciaDTO) => boolean> = {
+  todos: () => true,
+  fijos: (r) => r.activa && !r.variable,
+  variables: (r) => r.activa && r.variable,
+  pausados: (r) => !r.activa,
+};
+const OPCIONES_FILTRO: { valor: Filtro; label: string }[] = [
+  { valor: "todos", label: "Todos" },
+  { valor: "fijos", label: "Fijos" },
+  { valor: "variables", label: "Variables" },
+  { valor: "pausados", label: "Pausados" },
+];
+
 export function Recurrencias() {
   const h = useHogar();
   const { data, isLoading, error } = useRecurrencias();
   const editor = useEditor<RecurrenciaDTO>();
-  const ingresos = data?.filter((r) => r.tipo === "ingreso") ?? [];
+  const [busqueda, setBusqueda] = useState("");
+  const [filtro, setFiltro] = useState<Filtro>("todos");
   const gastos = data?.filter((r) => r.tipo === "gasto") ?? [];
+  const visibles = (data ?? []).filter(
+    (r) =>
+      FILTROS[filtro](r) &&
+      coincide(busqueda, r.concepto, h.categoria(r.categoriaId)?.nombre, h.cuenta(r.cuentaId)?.nombre, r.duenoId ? h.persona(r.duenoId)?.nombre : "quien pague", r.nota),
+  );
   const totalMensual = sumar(gastos.filter((r) => r.activa).map((r) => dec(r.montoMensual).times(r.moneda === "USD" ? (h.ultimaCotizacion?.valor ?? 0) : 1)));
 
   return (
@@ -28,8 +48,15 @@ export function Recurrencias() {
       {error && <Aviso tono="critical">{error.message}</Aviso>}
       {data && (
         <>
-          <Grupo titulo="Ingresos" lista={ingresos} onEditar={editor.abrir} />
-          <Grupo titulo="Gastos" lista={gastos} onEditar={editor.abrir} />
+          {data.length > 6 && (
+            <>
+              <Buscador valor={busqueda} onChange={setBusqueda} placeholder="Buscar fijos" />
+              <Segmentado etiqueta="Mostrar" opciones={OPCIONES_FILTRO} valor={filtro} onChange={setFiltro} />
+            </>
+          )}
+          <Grupo titulo="Ingresos" lista={visibles.filter((r) => r.tipo === "ingreso")} onEditar={editor.abrir} />
+          <Grupo titulo="Gastos" lista={visibles.filter((r) => r.tipo === "gasto")} onEditar={editor.abrir} />
+          {!visibles.length && <p className="py-6 text-center text-sm text-muted">Nada coincide con la búsqueda.</p>}
           {gastos.length > 0 && (
             <Aviso>
               Los gastos fijos activos equivalen a <Monto valor={totalMensual.toDecimalPlaces(2).toString()} className="font-semibold" /> por mes (prorrateando bimestrales, trimestrales, etc.).

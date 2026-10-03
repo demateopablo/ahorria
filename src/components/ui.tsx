@@ -1,5 +1,5 @@
 /** Piezas de UI chicas y reutilizables. Todo lo tocable mide ≥ 44 px. */
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { dec } from "@shared/domain/dinero";
@@ -196,6 +196,39 @@ export function Vacio({ imagen, titulo, texto, accion }: { imagen?: string; titu
       <p className="text-lg font-semibold text-ink">{titulo}</p>
       {texto && <p className="mt-1 max-w-xs text-sm text-ink-2">{texto}</p>}
       {accion && <div className="mt-5">{accion}</div>}
+    </div>
+  );
+}
+
+/** Normaliza para buscar: sin mayúsculas ni tildes ("Pañales" ≈ "panales"). */
+const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/** ¿Todas las palabras de la búsqueda aparecen en alguno de los textos? */
+export function coincide(busqueda: string, ...textos: (string | null | undefined)[]): boolean {
+  const palabras = normalizar(busqueda).split(/\s+/).filter(Boolean);
+  if (!palabras.length) return true;
+  const pajar = normalizar(textos.filter(Boolean).join(" "));
+  return palabras.every((p) => pajar.includes(p));
+}
+
+export function Buscador({ valor, onChange, placeholder = "Buscar" }: { valor: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <div className="relative">
+      <Search size={18} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted" aria-hidden />
+      <input
+        type="search"
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        enterKeyHint="search"
+        className={cx(claseInput, "pr-11 pl-10 [&::-webkit-search-cancel-button]:hidden")}
+      />
+      {valor && (
+        <button type="button" onClick={() => onChange("")} className="absolute top-1/2 right-0.5 flex size-11 -translate-y-1/2 items-center justify-center text-muted" aria-label="Borrar búsqueda">
+          <X size={18} />
+        </button>
+      )}
     </div>
   );
 }

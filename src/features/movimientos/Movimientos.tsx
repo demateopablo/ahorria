@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router";
 import { useHogar } from "@/app/hogar";
 import { Encabezado } from "@/app/Layout";
 import { Icono, IconoCategoria } from "@/components/Icono";
-import { Aviso, Boton, Cargando, cx, Monto, Select, Vacio } from "@/components/ui";
+import { Aviso, Boton, Buscador, Cargando, coincide, cx, Monto, Select, Vacio } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { mensajeError, post } from "@/lib/api";
 import { useEscritura, useMovimientos } from "@/lib/datos";
@@ -23,6 +23,7 @@ export function Movimientos() {
   const cuenta = params.get("cuenta") ?? "";
   // Los omitidos ("este mes no va") no se listan nunca, salvo acá: para poder arrepentirse.
   const descartados = params.get("descartados") === "1";
+  const busqueda = params.get("q") ?? "";
 
   const set = (k: string, v: string) => {
     const p = new URLSearchParams(params);
@@ -33,15 +34,23 @@ export function Movimientos() {
 
   const { data, isLoading, error } = useMovimientos({ mes, vista: h.vista, categoria, cuenta, estado: descartados ? "omitido" : "" });
 
+  const filtrados = useMemo(
+    () =>
+      (data ?? []).filter((m) =>
+        coincide(busqueda, m.concepto, m.nota, h.categoria(m.categoriaId)?.nombre, h.cuenta(m.cuentaId)?.nombre, h.cuenta(m.cuentaDestinoId)?.nombre, ...m.etiquetas),
+      ),
+    [data, busqueda, h],
+  );
+
   const porDia = useMemo(() => {
     const grupos = new Map<string, MovimientoDTO[]>();
-    for (const m of data ?? []) {
+    for (const m of filtrados) {
       const lista = grupos.get(m.fechaConsumo) ?? [];
       lista.push(m);
       grupos.set(m.fechaConsumo, lista);
     }
     return [...grupos.entries()];
-  }, [data]);
+  }, [filtrados]);
 
   const raices = h.categorias.filter((c) => !c.padreId && !c.archivada);
 
@@ -59,6 +68,7 @@ export function Movimientos() {
           </button>
         </div>
 
+        <Buscador valor={busqueda} onChange={(v) => set("q", v)} placeholder="Buscar en el mes" />
         <div className="grid grid-cols-2 gap-2">
           <Select value={categoria} onChange={(e) => set("categoria", e.target.value)} aria-label="Filtrar por categoría" className="min-h-11">
             <option value="">Categoría</option>
@@ -88,7 +98,7 @@ export function Movimientos() {
         >
           Descartados
         </button>
-        {(categoria || cuenta || descartados) && (
+        {(categoria || cuenta || descartados || busqueda) && (
           <button type="button" className="flex min-h-10 items-center gap-1 text-sm font-medium text-accent" onClick={() => setParams(new URLSearchParams({ mes }), { replace: true })}>
             <X size={16} /> Sacar filtros
           </button>
@@ -96,12 +106,12 @@ export function Movimientos() {
 
         {isLoading && <Cargando />}
         {error && <Aviso tono="critical">{error.message}</Aviso>}
-        {data && !data.length && (
+        {data && !filtrados.length && (
           <Vacio
             imagen="/img/vacio.webp"
             titulo="Nada por acá"
-            texto={descartados ? `No descartaste nada en ${formatMes(mes)}.` : "No hay movimientos con estos filtros."}
-            accion={mes === mesActual && !categoria && !cuenta && !descartados ? <Boton onClick={() => abrirCarga()}>Cargar uno</Boton> : undefined}
+            texto={busqueda ? `Nada coincide con "${busqueda}" en ${formatMes(mes)}.` : descartados ? `No descartaste nada en ${formatMes(mes)}.` : "No hay movimientos con estos filtros."}
+            accion={mes === mesActual && !categoria && !cuenta && !descartados && !busqueda ? <Boton onClick={() => abrirCarga()}>Cargar uno</Boton> : undefined}
           />
         )}
 
