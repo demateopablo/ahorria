@@ -42,10 +42,10 @@ vencido, cuotas, aguinaldo, bonos trimestrales, ajustes por inflación.
 | | |
 |---|---|
 | **Carga en 3 toques** | Monto, categoría, guardar. Cuenta, fecha, persona y ámbito se completan solos (y se cambian si hace falta). Con IA: «super 45 mil con MP». |
-| **Fijos para confirmar** | Sueldo, alquiler, servicios: cada mes aparecen *pendientes* y se confirman con un toque, editando el monto si cambió. |
+| **Fijos para confirmar** | Sueldo, alquiler, servicios: cada mes aparecen *pendientes* y se confirman con un toque, editando el monto si cambió. Si tocaste de más, *Deshacer*; lo descartado se recupera desde Movimientos. |
 | **Gastos variables** | Súper, nafta, verdulería: se cargan compra por compra y la proyección estima solo lo que falta gastar. |
 | **Cuotas** | Una compra en 12 cuotas son 12 gastos futuros. Ves cuánto de tus próximos sueldos ya está comprometido. |
-| **Tarjetas a mes vencido** | Lo que consumís en octubre impacta en el flujo de noviembre (respeta el día de cierre). |
+| **Tarjetas a mes vencido** | Con el día de cierre y de vencimiento de cada tarjeta, cada compra sabe en qué resumen entra y cuándo se paga, y te lo muestra al cargarla. |
 | **Persona y hogar** | Cada uno ve lo suyo, el hogar ve todo. Las transferencias entre ustedes no son gasto: nada se cuenta dos veces. |
 | **Proyección** | 6 o 12 meses: ingresos esperados, fijos, cuotas y eventos. La sobra de cada mes y aviso cuando viene *ajustado* o *en rojo*. |
 | **Dólares** | Cotización oficial (BNA) y MEP automática todos los días. Cada gasto en USD guarda la suya. |
@@ -61,12 +61,12 @@ vencido, cuotas, aguinaldo, bonos trimestrales, ajustes por inflación.
 | Movimientos | Proyección | Detalle de un mes |
 |:---:|:---:|:---:|
 | <img src="docs/capturas/movimientos.webp" width="240" alt="Movimientos" /> | <img src="docs/capturas/proyeccion.webp" width="240" alt="Proyección" /> | <img src="docs/capturas/proyeccion-detalle.webp" width="240" alt="Detalle de un mes proyectado" /> |
-| Por mes, con filtros. Las compras con tarjeta muestran cuándo impactan. | La sobra de cada mes, con aviso cuando viene ajustado o en rojo. | Ingresos, fijos, cuotas y eventos que explican cada mes. |
+| Por mes, con buscador y filtros. Las compras con tarjeta muestran cuándo cierra el resumen y cuándo se paga. | La sobra de cada mes, con aviso cuando viene ajustado o en rojo. | Ingresos, fijos, cuotas y eventos que explican cada mes. |
 
 | Gastos fijos | Cuotas | Modo oscuro |
 |:---:|:---:|:---:|
 | <img src="docs/capturas/fijos.webp" width="240" alt="Gastos e ingresos fijos" /> | <img src="docs/capturas/cuotas.webp" width="240" alt="Compras en cuotas" /> | <img src="docs/capturas/inicio-oscuro.webp" width="240" alt="Inicio en modo oscuro" /> |
-| Sueldo, alquiler, servicios, aguinaldo; y los variables como el súper. | Cuánto falta pagar de cada compra y cuándo vence la próxima. | Sigue el modo del sistema. |
+| Sueldo, alquiler, servicios, aguinaldo; y los variables como el súper. Con buscador. | Cuánto falta pagar de cada compra y cuándo vence la próxima. | Automático (sigue al sistema), o claro u oscuro desde *Más → Tema*. |
 
 ## Instalación en un paso
 
@@ -106,7 +106,10 @@ resumen:
 {
   "hogar": { "nombre": "Casa de Ana y Leo", "umbralMargenBajo": 250000 },
   "personas": [{ "nombre": "Ana", "email": "ana@gmail.com" }],          // el email de Google es el acceso
-  "cuentas": [{ "nombre": "Mercado Pago", "tipo": "billetera", "titular": "Ana", "saldoInicial": 600000 }],
+  "cuentas": [
+    { "nombre": "Mercado Pago", "tipo": "billetera", "titular": "Ana", "saldoInicial": 600000 },
+    { "nombre": "Tarjeta Ana", "tipo": "tarjeta_credito", "titular": "Ana", "diaCierre": 25, "diaVencimiento": 5 }
+  ],
   "recurrencias": [
     { "concepto": "Sueldo", "tipo": "ingreso", "monto": 1800000, "dia": 3, "dueno": "Ana", "cuenta": "Mercado Pago", "categoria": "Sueldo" },
     { "concepto": "Aguinaldo", "tipo": "ingreso", "monto": 900000, "frecuencia": "semestral", "mesAncla": "2026-12", "dia": 18, "dueno": "Ana", "cuenta": "Mercado Pago" },
@@ -127,8 +130,11 @@ Todo esto también se puede editar después desde la app (*Más*).
 
 **Movimientos.** Cada uno es un *ingreso*, un *gasto* o una *transferencia*, tiene un **dueño** (una
 persona del hogar), un **ámbito** (personal, compartido, negocio, familia) y una **cuenta**. Además
-de la fecha en que gastaste, guarda la **fecha de impacto**: con tarjeta, el gasto pega en el
-resumen del mes siguiente (o del otro, si compraste después del cierre).
+de la fecha en que gastaste, guarda la **fecha de impacto**: con tarjeta, el día que vence el
+resumen en el que entra. Lo comprado hasta el cierre va en el resumen que cierra ese mes; lo de
+después, en el siguiente. El vencimiento cae el mismo mes del cierre si es un día posterior (cierra el
+1, vence el 14) o el mes siguiente si no (cierra el 25, vence el 5). Sin día de cierre cargado, se
+asume el mes siguiente.
 
 **Vistas.** Arriba de cada pantalla elegís *Hogar* o una persona. En *Hogar* las transferencias
 entre ustedes no existen: si Ana le pasa plata a Leo para pagar la tarjeta, el gasto real es lo que
@@ -136,11 +142,17 @@ Leo consumió con esa tarjeta. En la vista de cada uno, la transferencia aparece
 recibida), nunca como gasto.
 
 **Fijos y variables.** Un fijo (alquiler, sueldo, seguro) genera cada período un movimiento
-*pendiente* que confirmás con un toque. Un variable (súper, nafta) no genera nada: cargás cada compra
-y la proyección descuenta lo ya gastado en esa categoría del monto estimado del mes.
+*pendiente* que confirmás con un toque (o *omitís* si ese mes no va; los dos se pueden deshacer). Cada
+pendiente cubre el mes de su fecha: si lo confirmás con la fecha real de otro mes, pasa a cubrir ese
+mes y el que quedó libre vuelve a aparecer para confirmar, así la proyección no cuenta nada dos veces.
+Si editás un fijo (día, monto, cuenta), sus pendientes sin confirmar se actualizan. Un variable
+(súper, nafta) no genera nada: cargás cada compra y la proyección descuenta lo ya gastado en esa
+categoría del monto estimado del mes; si el mes termina sin cargar nada, el estimado simplemente
+desaparece.
 
-**Cuotas.** Al cargar una compra en N cuotas se crean N gastos, uno por mes. Si la cancelás antes,
-se borran solo las cuotas que todavía no se pagaron.
+**Cuotas.** Al cargar una compra en N cuotas se crean N gastos, uno por mes, y no hay que cargarlas
+de nuevo cuando llega el resumen. Si la cancelás antes, se borran solo las cuotas que todavía no se
+pagaron. El nombre del plan se puede corregir en cualquier momento.
 
 **Proyección.** Para cada mes suma lo ya cargado (confirmado, pendiente, cuotas) más lo esperado de
 los fijos y los eventos del año (cumpleaños, fiestas). Muestra la **sobra** y el **acumulado**:
