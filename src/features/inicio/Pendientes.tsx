@@ -54,6 +54,9 @@ function FilaPendiente({ m }: { m: MovimientoDTO }) {
 
   const confirmar = useEscritura((monto?: string) => post(`/pendientes/${m.id}/confirmar`, monto ? { monto } : {}));
   const omitir = useEscritura(() => post(`/pendientes/${m.id}/omitir`));
+  // Vuelve a dejarlo como estaba (un toque de más en el celular no tiene que costar borrar y recargar).
+  const reabrir = useEscritura(() => post(`/pendientes/${m.id}/reabrir`, { monto: m.monto, fechaConsumo: m.fechaConsumo, duenoId: m.duenoId, cuentaId: m.cuentaId }));
+  const deshacer = { label: "Deshacer", fn: () => reabrir.mutateAsync(undefined).catch((e) => toast({ texto: mensajeError(e), error: true })) };
 
   async function onConfirmar() {
     const monto = editando ? parseMontoAR(texto) : null;
@@ -63,7 +66,7 @@ function FilaPendiente({ m }: { m: MovimientoDTO }) {
     }
     try {
       await confirmar.mutateAsync(monto ?? undefined);
-      toast({ texto: `${m.concepto} confirmado` });
+      toast({ texto: `${m.concepto} confirmado`, accion: deshacer });
     } catch (e) {
       toast({ texto: mensajeError(e), error: true });
     }
@@ -72,7 +75,7 @@ function FilaPendiente({ m }: { m: MovimientoDTO }) {
   async function onOmitir() {
     try {
       await omitir.mutateAsync(undefined);
-      toast({ texto: `${m.concepto}: este mes no va` });
+      toast({ texto: `${m.concepto}: este mes no va`, accion: deshacer });
     } catch (e) {
       toast({ texto: mensajeError(e), error: true });
     }

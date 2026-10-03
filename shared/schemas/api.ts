@@ -139,6 +139,9 @@ export const recurrenciaInput = z
   });
 export type RecurrenciaInput = z.input<typeof recurrenciaInput>;
 
+/** Lo único que se corrige de un plan sin cancelarlo: el nombre. */
+export const planCuotasPatch = z.object({ descripcion: zTexto(80) });
+
 export const planCuotasInput = z
   .object({
     descripcion: zTexto(80),

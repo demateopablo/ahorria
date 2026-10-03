@@ -8,6 +8,7 @@ import { aFecha, deFecha } from "../fechas.js";
 import type { Prisma } from "../generated/prisma/client.js";
 import { HttpError, validar } from "../http.js";
 import type { Contexto } from "./contexto.js";
+import { reubicarPeriodo } from "./pendientes.js";
 
 type Datos = ReturnType<typeof movimientoInput.parse>;
 
@@ -79,7 +80,15 @@ export async function actualizarMovimiento(p: PrismaClient, id: string, patch: P
   });
   const data = await resolver(p, fusion, yoId, ctx);
   const estado = patch.estado as "confirmado" | "pendiente" | "omitido" | undefined;
-  return p.movimiento.update({ where: { id }, data: { ...data, ...(estado ? { estado } : {}) }, include: incluir });
+  const reubicado = await reubicarPeriodo(p, actual, fusion.fechaConsumo, ctx);
+  const update = p.movimiento.update({
+    where: { id },
+    data: { ...data, ...(estado ? { estado } : {}), ...(reubicado ? { periodo: reubicado.periodo } : {}) },
+    include: incluir,
+  });
+  if (!reubicado) return update;
+  const res = await p.$transaction([...reubicado.antes, update, ...reubicado.despues]);
+  return res[reubicado.antes.length] as Awaited<typeof update>;
 }
 
 export const incluir = {

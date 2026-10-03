@@ -119,6 +119,18 @@ pendientes.post("/:id/confirmar", async (c) => {
   return c.json({ movimiento: movimientoDTO(m, ctx.base, ctx.cotizacion) });
 });
 
+/** Deshace confirmar u omitir: vuelve a pendiente, opcionalmente con los datos que tenía antes. */
+pendientes.post("/:id/reabrir", async (c) => {
+  const p = c.var.p;
+  const ctx = await cargarContexto(p);
+  const id = c.req.param("id");
+  const datos = await cuerpo(c, confirmarInput);
+  const actual = await p.movimiento.findUnique({ where: { id } });
+  if (!actual?.recurrenciaId || actual.estado === "pendiente") throw new HttpError(404, "No hay nada que deshacer");
+  const m = await actualizarMovimiento(p, id, { ...datos, estado: "pendiente" }, c.var.sesion.personaId, ctx);
+  return c.json({ movimiento: movimientoDTO(m, ctx.base, ctx.cotizacion) });
+});
+
 pendientes.post("/:id/omitir", async (c) => {
   const r = await c.var.p.movimiento.updateMany({ where: { id: c.req.param("id"), estado: "pendiente" }, data: { estado: "omitido" } });
   if (!r.count) throw new HttpError(404, "No existe el pendiente");

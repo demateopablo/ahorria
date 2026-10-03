@@ -141,6 +141,41 @@ describe.skipIf(!URL_TEST)("API", () => {
       const despues = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
       expect(despues.movimientos.some((m) => m.id === luz.id)).toBe(false);
     });
+
+    it("confirmar con la fecha real de otro mes mueve el período y deja pendiente el que liberó", async () => {
+      const mes = hoy.slice(0, 7);
+      const anterior = sumarMeses(mes, -1);
+      const { movimientos } = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
+      const seguro = movimientos.find((m) => m.concepto === "Seguro del auto")!;
+      expect(seguro.periodo).toBe(mes);
+
+      const r = await json<{ movimiento: MovimientoDTO }>(req("POST", `/pendientes/${seguro.id}/confirmar`, { body: { fechaConsumo: `${anterior}-14` } }));
+      expect(r.movimiento).toMatchObject({ estado: "confirmado", periodo: anterior });
+      const despues = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
+      const nuevo = despues.movimientos.filter((m) => m.concepto === "Seguro del auto");
+      expect(nuevo.map((m) => m.periodo)).toEqual([mes]);
+
+      // La proyección no lo cuenta dos veces: a lo sumo una línea del seguro por mes.
+      const proy = await json<ProyeccionDTO>(req("GET", "/proyeccion?meses=4"));
+      for (const m of proy.meses) expect(m.lineas.filter((l) => l.concepto === "Seguro del auto").length, m.mes).toBeLessThanOrEqual(1);
+
+      // Deshacer: vuelve a ser el pendiente de este mes y reemplaza al regenerado.
+      const back = await json<{ movimiento: MovimientoDTO }>(
+        req("POST", `/pendientes/${seguro.id}/reabrir`, { body: { monto: seguro.monto, fechaConsumo: seguro.fechaConsumo } }),
+      );
+      expect(back.movimiento).toMatchObject({ id: seguro.id, estado: "pendiente", periodo: mes, fechaConsumo: seguro.fechaConsumo });
+      const final = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
+      expect(final.movimientos.filter((m) => m.concepto === "Seguro del auto").map((m) => m.id)).toEqual([seguro.id]);
+    });
+
+    it("un omitido se puede deshacer; un pendiente no", async () => {
+      const { movimientos } = await json<{ movimientos: MovimientoDTO[] }>(req("GET", "/pendientes"));
+      const internet = movimientos.find((m) => m.concepto === "Internet")!;
+      expect((await req("POST", `/pendientes/${internet.id}/reabrir`, { body: {} })).status).toBe(404);
+      await req("POST", `/pendientes/${internet.id}/omitir`);
+      const r = await json<{ movimiento: MovimientoDTO }>(req("POST", `/pendientes/${internet.id}/reabrir`, { body: {} }));
+      expect(r.movimiento.estado).toBe("pendiente");
+    });
   });
 
   describe("movimientos", () => {
@@ -223,6 +258,9 @@ describe.skipIf(!URL_TEST)("API", () => {
       expect(plan.total).toBe(6);
       expect(plan.restante).toBe("600000");
       expect(await p.movimiento.count({ where: { planCuotasId: plan.id } })).toBe(6);
+
+      const renombrado = await json<{ plan: { descripcion: string; total: number } }>(req("PATCH", `/cuotas/${plan.id}`, { body: { descripcion: "Notebook nueva" } }));
+      expect(renombrado.plan).toMatchObject({ descripcion: "Notebook nueva", total: 6 });
 
       expect((await req("DELETE", `/cuotas/${plan.id}`)).status).toBe(200);
       expect(await p.movimiento.count({ where: { nota: null, monto: "100000", cuentaId: ids["Tarjeta Ana"], fechaImpacto: { gt: new Date(`${hoy}T00:00:00Z`) } } })).toBe(0);

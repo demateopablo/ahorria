@@ -75,6 +75,13 @@ describe("fecha de impacto", () => {
     expect(fechaImpacto("2026-10-25", tarjeta)).toBe("2026-11-07");
     expect(fechaImpacto("2026-10-26", tarjeta)).toBe("2026-12-07");
   });
+
+  it("si vence el mismo mes en que cierra (cierra el 1, vence el 14)", () => {
+    const tarjeta = { tipo: "tarjeta_credito" as const, diaCierre: 1, diaVencimiento: 14 };
+    expect(fechaImpacto("2026-10-01", tarjeta)).toBe("2026-10-14");
+    expect(fechaImpacto("2026-10-03", tarjeta)).toBe("2026-11-14");
+    expect(fechaImpacto("2026-09-25", tarjeta)).toBe("2026-10-14");
+  });
 });
 
 describe("recurrencias", () => {

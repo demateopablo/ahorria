@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { esMes, mesDe } from "../../shared/domain/fechas.js";
-import { planCuotasInput, recurrenciaInput } from "../../shared/schemas/api.js";
+import { planCuotasInput, planCuotasPatch, recurrenciaInput } from "../../shared/schemas/api.js";
 import { planCuotasDTO, recurrenciaDTO } from "../dto.js";
 import { deFecha } from "../fechas.js";
 import { cuerpo, HttpError, validar } from "../http.js";
@@ -91,6 +91,15 @@ cuotas.post("/", async (c) => {
   const d = await cuerpo(c, planCuotasInput);
   const plan = await crearPlanCuotas(c.var.p, d, c.var.sesion.personaId, ctx);
   return c.json({ plan: planCuotasDTO(plan, ctx.hoy) }, 201);
+});
+
+cuotas.patch("/:id", async (c) => {
+  const ctx = await cargarContexto(c.var.p);
+  const d = await cuerpo(c, planCuotasPatch);
+  const id = c.req.param("id");
+  if (!(await c.var.p.planCuotas.findUnique({ where: { id } }))) throw new HttpError(404, "No existe el plan de cuotas");
+  const plan = await c.var.p.planCuotas.update({ where: { id }, data: { descripcion: d.descripcion } });
+  return c.json({ plan: planCuotasDTO(plan, ctx.hoy) });
 });
 
 cuotas.delete("/:id", async (c) => {

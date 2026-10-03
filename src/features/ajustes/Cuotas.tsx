@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useHogar } from "@/app/hogar";
 import { IconoCategoria } from "@/components/Icono";
 import { Aviso, Campo, Cargando, Input, Monto, Select, Tarjeta, Vacio } from "@/components/ui";
-import { del, post } from "@/lib/api";
+import { del, patch, post } from "@/lib/api";
 import { useCuotas } from "@/lib/datos";
 import { sumar } from "@shared/domain/dinero";
 import { formatFecha } from "@shared/format";
@@ -75,7 +75,7 @@ function EditorCuotas({ abierto, item, onCerrar }: { abierto: boolean; item?: Pl
   const h = useHogar();
   const tarjeta = h.cuentasActivas.find((c) => c.tipo === "tarjeta_credito" && c.titularId === h.yo.id) ?? h.cuentasActivas[0];
   const [f, setF] = useState({
-    descripcion: "",
+    descripcion: item?.descripcion ?? "",
     montoCuota: "",
     cantidad: "6",
     fechaCompra: h.hoy,
@@ -86,15 +86,19 @@ function EditorCuotas({ abierto, item, onCerrar }: { abierto: boolean; item?: Pl
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
 
   if (item) {
-    // Un plan no se edita: se cancela (se borran las cuotas futuras) y se vuelve a cargar.
+    // De un plan solo se corrige el nombre; el resto se cancela (se borran las cuotas futuras) y se vuelve a cargar.
     return (
       <HojaEditor
         abierto={abierto}
         onCerrar={onCerrar}
         titulo={item.descripcion}
+        onGuardar={() => patch(`/cuotas/${item.id}`, { descripcion: f.descripcion })}
         onBorrar={() => del(`/cuotas/${item.id}`)}
         textoBorrar="Cancelar plan"
       >
+        <Campo label="Qué compraste">
+          <Input value={f.descripcion} onChange={(e) => set("descripcion", e.target.value)} />
+        </Campo>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-ink-2">Cuota</dt>
@@ -119,7 +123,7 @@ function EditorCuotas({ abierto, item, onCerrar }: { abierto: boolean; item?: Pl
             <dd>{h.cuenta(item.cuentaId)?.nombre}</dd>
           </div>
         </dl>
-        <Aviso>Para corregir un plan, cancelalo y cargalo de nuevo. Al cancelarlo se borran las cuotas que todavía no se pagaron; las pagadas quedan.</Aviso>
+        <Aviso>Para corregir el monto o las cuotas, cancelalo y cargalo de nuevo. Al cancelarlo se borran las cuotas que todavía no se pagaron; las pagadas quedan.</Aviso>
       </HojaEditor>
     );
   }

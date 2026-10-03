@@ -9,13 +9,16 @@ export const VENCIMIENTO_POR_DEFECTO = 10;
  *
  * - Cuentas comunes: el mismo día.
  * - Tarjetas de crédito (se pagan a mes vencido):
- *   - con día de cierre: lo consumido hasta el cierre se paga el mes siguiente; lo consumido
- *     después del cierre entra en el próximo resumen y se paga dos meses después.
+ *   - con día de cierre: lo consumido hasta el cierre entra en el resumen que cierra ese mes; lo de
+ *     después, en el que cierra el mes siguiente. El resumen vence el primer día de vencimiento
+ *     posterior al cierre: el mismo mes si vence después del cierre (cierra el 1, vence el 14) o el
+ *     siguiente si no (cierra el 25, vence el 5).
  *   - sin día de cierre: el mes siguiente.
  */
 export function fechaImpacto(fechaConsumo: Fecha, cuenta: CuentaImpacto): Fecha {
   if (cuenta.tipo !== "tarjeta_credito") return fechaConsumo;
   const vencimiento = cuenta.diaVencimiento ?? VENCIMIENTO_POR_DEFECTO;
-  const despuesDelCierre = cuenta.diaCierre != null && diaDe(fechaConsumo) > cuenta.diaCierre;
-  return fechaEnMes(sumarMeses(mesDe(fechaConsumo), despuesDelCierre ? 2 : 1), vencimiento);
+  if (cuenta.diaCierre == null) return fechaEnMes(sumarMeses(mesDe(fechaConsumo), 1), vencimiento);
+  const mesCierre = sumarMeses(mesDe(fechaConsumo), diaDe(fechaConsumo) > cuenta.diaCierre ? 1 : 0);
+  return fechaEnMes(sumarMeses(mesCierre, vencimiento > cuenta.diaCierre ? 0 : 1), vencimiento);
 }

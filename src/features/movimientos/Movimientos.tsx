@@ -1,11 +1,13 @@
-import { ArrowLeftRight, ChevronLeft, ChevronRight, CreditCard, Repeat, X } from "lucide-react";
+import { ArrowLeftRight, ChevronLeft, ChevronRight, CreditCard, Repeat, Undo2, X } from "lucide-react";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { useHogar } from "@/app/hogar";
 import { Encabezado } from "@/app/Layout";
 import { Icono, IconoCategoria } from "@/components/Icono";
 import { Aviso, Boton, Cargando, cx, Monto, Select, Vacio } from "@/components/ui";
-import { useMovimientos } from "@/lib/datos";
+import { useToast } from "@/components/Toast";
+import { mensajeError, post } from "@/lib/api";
+import { useEscritura, useMovimientos } from "@/lib/datos";
 import { formatFecha, formatMes } from "@shared/format";
 import { sumarMeses } from "@shared/domain/fechas";
 import type { MovimientoDTO } from "@shared/schemas/api";
@@ -19,6 +21,8 @@ export function Movimientos() {
   const mes = params.get("mes") ?? mesActual;
   const categoria = params.get("categoria") ?? "";
   const cuenta = params.get("cuenta") ?? "";
+  // Los omitidos ("este mes no va") no se listan nunca, salvo acá: para poder arrepentirse.
+  const descartados = params.get("descartados") === "1";
 
   const set = (k: string, v: string) => {
     const p = new URLSearchParams(params);
@@ -27,7 +31,7 @@ export function Movimientos() {
     setParams(p, { replace: true });
   };
 
-  const { data, isLoading, error } = useMovimientos({ mes, vista: h.vista, categoria, cuenta });
+  const { data, isLoading, error } = useMovimientos({ mes, vista: h.vista, categoria, cuenta, estado: descartados ? "omitido" : "" });
 
   const porDia = useMemo(() => {
     const grupos = new Map<string, MovimientoDTO[]>();
@@ -73,7 +77,18 @@ export function Movimientos() {
             ))}
           </Select>
         </div>
-        {(categoria || cuenta) && (
+        <button
+          type="button"
+          aria-pressed={descartados}
+          onClick={() => set("descartados", descartados ? "" : "1")}
+          className={cx(
+            "min-h-11 rounded-full border px-4 text-sm font-medium",
+            descartados ? "border-accent bg-accent-soft text-accent" : "border-line text-ink-2",
+          )}
+        >
+          Descartados
+        </button>
+        {(categoria || cuenta || descartados) && (
           <button type="button" className="flex min-h-10 items-center gap-1 text-sm font-medium text-accent" onClick={() => setParams(new URLSearchParams({ mes }), { replace: true })}>
             <X size={16} /> Sacar filtros
           </button>
@@ -85,8 +100,8 @@ export function Movimientos() {
           <Vacio
             imagen="/img/vacio.webp"
             titulo="Nada por acá"
-            texto="No hay movimientos con estos filtros."
-            accion={mes === mesActual && !categoria && !cuenta ? <Boton onClick={() => abrirCarga()}>Cargar uno</Boton> : undefined}
+            texto={descartados ? `No descartaste nada en ${formatMes(mes)}.` : "No hay movimientos con estos filtros."}
+            accion={mes === mesActual && !categoria && !cuenta && !descartados ? <Boton onClick={() => abrirCarga()}>Cargar uno</Boton> : undefined}
           />
         )}
 
@@ -97,7 +112,7 @@ export function Movimientos() {
             </h2>
             <ul className="overflow-hidden rounded-3xl bg-surface">
               {movs.map((m) => (
-                <Fila key={m.id} m={m} onClick={() => abrirCarga(m)} />
+                m.estado === "omitido" ? <FilaDescartada key={m.id} m={m} /> : <Fila key={m.id} m={m} onClick={() => abrirCarga(m)} />
               ))}
             </ul>
           </section>
@@ -154,6 +169,41 @@ function Fila({ m, onClick }: { m: MovimientoDTO; onClick: () => void }) {
             </span>
           )}
         </span>
+      </button>
+    </li>
+  );
+}
+
+/** Un pendiente omitido: se puede devolver a "Para confirmar". */
+function FilaDescartada({ m }: { m: MovimientoDTO }) {
+  const h = useHogar();
+  const toast = useToast();
+  const cat = h.categoria(m.categoriaId);
+  const recuperar = useEscritura(() => post(`/pendientes/${m.id}/reabrir`));
+
+  async function onRecuperar() {
+    try {
+      await recuperar.mutateAsync(undefined);
+      toast({ texto: `${m.concepto} volvió a "Para confirmar"` });
+    } catch (e) {
+      toast({ texto: mensajeError(e), error: true });
+    }
+  }
+
+  return (
+    <li className={cx("flex min-h-16 items-center gap-3 border-b border-line px-3 py-2 last:border-0", recuperar.isPending && "opacity-50")}>
+      <IconoCategoria icono={cat?.icono} color={cat?.color} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium">{m.concepto || cat?.nombre}</span>
+        <Monto valor={m.monto} moneda={m.moneda} className="text-xs text-muted" />
+      </span>
+      <button
+        type="button"
+        onClick={onRecuperar}
+        disabled={recuperar.isPending}
+        className="flex min-h-11 items-center gap-1 rounded-full bg-accent-soft px-3 text-sm font-semibold text-accent"
+      >
+        <Undo2 size={16} aria-hidden /> Recuperar
       </button>
     </li>
   );
