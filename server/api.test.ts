@@ -26,6 +26,8 @@ describe.skipIf(!URL_TEST)("API", () => {
   beforeAll(async () => {
     process.env.SESSION_SECRET ||= "secreto-de-tests-secreto-de-tests";
     process.env.LLM_API_KEY = "";
+    process.env.GROQ_API_KEY = "";
+    process.env.OPENROUTER_API_KEY = "";
     execSync("npx prisma migrate deploy", { env: { ...process.env, DATABASE_URL: URL_TEST }, stdio: "ignore" });
     p = new PrismaClient({ adapter: new PrismaPg({ connectionString: URL_TEST! }) });
     await vaciarBase(p);

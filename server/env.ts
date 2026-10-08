@@ -1,3 +1,5 @@
+import { proveedores } from "./llm.js";
+
 /** Lectura de variables de entorno con error claro si falta alguna. */
 export function requireEnv(name: string): string {
   const value = process.env[name];
@@ -11,5 +13,5 @@ export function devLoginHabilitado(): boolean {
 }
 
 export function iaHabilitada(): boolean {
-  return Boolean(process.env.LLM_API_KEY && process.env.LLM_MODEL);
+  return proveedores().length > 0;
 }

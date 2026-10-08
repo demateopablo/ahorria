@@ -68,7 +68,7 @@ export function Mas() {
             <p className="px-3 pb-3 text-sm text-ink-2">
               {h.ia
                 ? "Al cargar un gasto podés escribir, por ejemplo, «super 45 mil con MP» arriba del teclado."
-                : "La API key no se carga desde la app (sería un secreto guardado en la base): se configura en el servidor con LLM_API_KEY, LLM_BASE_URL y LLM_MODEL. Instrucciones en el README."}
+                : "La API key no se carga desde la app (sería un secreto guardado en la base): se configura en el servidor con GROQ_API_KEY, OPENROUTER_API_KEY o LLM_API_KEY. Instrucciones en el README."}
             </p>
           </details>
         </Tarjeta>

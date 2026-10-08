@@ -1,0 +1,15 @@
+# Una frase por línea; las que empiezan con # se ignoran.
+# Usan los nombres de seed/household.example.json (Ana, Leo, Tarjeta Ana…).
+super 45 mil
+ayer nafta 30 mil con la tarjeta de Leo
+le pasé 100 lucas a Leo
+cobré el sueldo, 1,8 palos
+delivery 18.500 el viernes
+veterinaria 25000 en efectivo
+heladera en 12 cuotas de 85 mil con la Tarjeta Ana
+tele 1,2 palos en 6 cuotas con la Tarjeta Leo
+netflix 9.999
+regalo para el cumple de mamá 40 lucas
+verdulería 12 mil
+100 dólares a la caja en dólares
+farmacia 15300 lo pagó Leo

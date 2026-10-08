@@ -77,17 +77,21 @@ Guiala en https://console.cloud.google.com:
 
 ## 4. IA (opcional)
 
-Sirve para cargar escribiendo ("super 45 mil con MP"). Cualquier proveedor compatible con OpenAI:
+Sirve para cargar escribiendo ("super 45 mil con MP"). Proveedores en cadena con `LLM_PROVIDER`
+(el primero es el principal; si falla, el siguiente):
 
-- OpenRouter (recomendado, muchos modelos): crear key en https://openrouter.ai/keys,
-  `LLM_BASE_URL=https://openrouter.ai/api/v1`, `LLM_MODEL=openai/gpt-4o-mini` (o el que prefiera; se
-  pueden poner varios separados por coma como fallback).
-- Claude (Anthropic): key en https://console.anthropic.com/settings/keys,
-  `LLM_BASE_URL=https://api.anthropic.com/v1`, `LLM_MODEL=claude-haiku-4-5` (rápido y barato; sirve de sobra para esto).
-- OpenAI: `LLM_BASE_URL=https://api.openai.com/v1`, `LLM_MODEL=gpt-4o-mini`.
-- Ollama local: `LLM_BASE_URL=http://localhost:11434/v1`, cualquier `LLM_API_KEY` no vacía.
+- Groq (recomendado: gratis, sin tarjeta, muy rápido): key en https://console.groq.com/keys →
+  `GROQ_API_KEY`. Modelo opcional en `GROQ_MODEL` (por defecto `openai/gpt-oss-20b`).
+- OpenRouter (fallback gratis): key en https://openrouter.ai/keys → `OPENROUTER_API_KEY`. Modelo en
+  `OPENROUTER_MODEL` (por defecto `openrouter/free`).
+- Con las dos: `LLM_PROVIDER=groq,openrouter`.
+- Cualquier otro compatible con OpenAI (`custom`, sumarlo a `LLM_PROVIDER`): `LLM_BASE_URL`,
+  `LLM_API_KEY`, `LLM_MODEL`. Claude: `https://api.anthropic.com/v1` + `claude-haiku-4-5`; OpenAI:
+  `https://api.openai.com/v1` + `gpt-4o-mini`; Ollama local: `http://localhost:11434/v1`, cualquier
+  key no vacía.
 
-Sin `LLM_API_KEY` la app funciona igual; el campo de texto libre no aparece.
+Para comparar latencia y calidad: `npm run llm:bench`. Sin ninguna key la app funciona igual; el campo
+de texto libre no aparece.
 
 ## 5. Producción (Vercel + Neon)
 
@@ -104,7 +108,7 @@ Sin `LLM_API_KEY` la app funciona igual; el campo de texto libre no aparece.
    agregá `"regions": ["gru1"]` en `vercel.json` para que la Function quede cerca de la base.
 4. Variables en Vercel (Production), una por una con `! npx vercel env add NOMBRE production`:
    `DATABASE_URL` (pooled), `SESSION_SECRET` (uno nuevo, distinto del local), `GOOGLE_CLIENT_ID`,
-   `VITE_GOOGLE_CLIENT_ID` y, si usa IA, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`.
+   `VITE_GOOGLE_CLIENT_ID` y, si usa IA, `LLM_PROVIDER` y las keys (`GROQ_API_KEY`, `OPENROUTER_API_KEY`).
    **No** setear `ALLOW_DEV_LOGIN` en producción.
 5. `npx vercel --prod`. Agregar la URL final a los *orígenes autorizados* de Google (paso 3).
 6. Verificar: abrir la URL en el celular, entrar con Google, cargar un gasto. Instalar como app:

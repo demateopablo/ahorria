@@ -213,18 +213,23 @@ solo **completa el formulario**: nunca guarda nada sin que lo confirmes. Funcion
 proveedor compatible con la API de OpenAI; la key va como variable de entorno (no se carga desde la
 app, para no guardar un secreto en la base).
 
-| Proveedor | `LLM_BASE_URL` | `LLM_MODEL` | Costo |
+Se configuran uno o más proveedores en cadena: `LLM_PROVIDER=groq,openrouter` usa Groq y, si falla
+(sin key, rate limit, error o respuesta mal formada), cae a OpenRouter. Los que no tienen key se saltean.
+
+| Proveedor (`LLM_PROVIDER`) | Variables | Modelo por defecto | Costo |
 |---|---|---|---|
-| [OpenRouter](https://openrouter.ai/keys) | `https://openrouter.ai/api/v1` | `openrouter/free` | **Gratis** (con límite diario) |
-| [OpenRouter](https://openrouter.ai/keys) | `https://openrouter.ai/api/v1` | `google/gemini-2.5-flash` | < USD 0,001 por carga |
-| [Anthropic (Claude)](https://console.anthropic.com/settings/keys) | `https://api.anthropic.com/v1` | `claude-haiku-4-5` | Pago por uso |
-| [OpenAI](https://platform.openai.com/api-keys) | `https://api.openai.com/v1` | `gpt-4o-mini` | Pago por uso |
-| [Ollama](https://ollama.com) (local) | `http://localhost:11434/v1` | el modelo que tengas | Gratis |
+| `groq` ([key](https://console.groq.com/keys)) | `GROQ_API_KEY`, `GROQ_MODEL` | `openai/gpt-oss-20b` | **Gratis** (con límites), muy rápido |
+| `openrouter` ([key](https://openrouter.ai/keys)) | `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | `openrouter/free` | **Gratis** (con límite diario) |
+| `custom`: cualquier endpoint compatible con OpenAI (Claude, OpenAI, Ollama…) | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | — | Según el proveedor |
+
+Los modelos van de a uno o varios separados por coma (se prueban en orden). Para comparar
+proveedores con frases de ejemplo (`scripts/llm-frases.txt`): `npm run llm:bench`. Cada llamada deja
+una línea `[llm]` en el log con proveedor, modelo, latencia y tokens (`LLM_LOG=false` la apaga).
 
 ```bash
-npx vercel env add LLM_BASE_URL production
-npx vercel env add LLM_MODEL production       # uno o varios separados por coma (se prueban en orden)
-npx vercel env add LLM_API_KEY production
+npx vercel env add LLM_PROVIDER production       # groq,openrouter
+npx vercel env add GROQ_API_KEY production
+npx vercel env add OPENROUTER_API_KEY production
 npx vercel deploy --prod
 ```
 
@@ -294,7 +299,7 @@ bienvenidos: si cambiás una regla de cálculo, sumá su test en `shared/domain/
 | `DIRECT_URL` | Opcional: conexión directa para migraciones en Neon. |
 | `SESSION_SECRET` | Secreto aleatorio para firmar la sesión. |
 | `GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_ID` | El mismo ID de cliente de Google, para el server y la app. |
-| `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` | Opcional: IA (ver [Carga con IA](#carga-con-ia-opcional)). |
+| `LLM_PROVIDER`, `GROQ_*`, `OPENROUTER_*`, `LLM_*` | Opcional: IA (ver [Carga con IA](#carga-con-ia-opcional)). |
 | `ALLOW_DEV_LOGIN` | Solo local: entrar sin Google. Nunca funciona en Vercel. |
 | `COTIZACION_AUTOMATICA` | `false` para no traer la cotización del dólar sola. |
 

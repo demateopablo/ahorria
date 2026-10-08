@@ -22,6 +22,7 @@
     "db:studio": "prisma studio",
     "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "assets": "node scripts/build-assets.mjs",
+    "llm:bench": "tsx --env-file-if-exists=.env scripts/llm-bench.ts",
     "postinstall": "prisma generate",
     "setup": "node scripts/setup.mjs"
   },
