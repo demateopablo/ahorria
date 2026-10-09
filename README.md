@@ -41,7 +41,7 @@ vencido, cuotas, aguinaldo, bonos trimestrales, ajustes por inflación.
 
 | | |
 |---|---|
-| **Carga en 3 toques** | Monto, categoría, guardar. Cuenta, fecha, persona y ámbito se completan solos (y se cambian si hace falta). Con IA: «super 45 mil con MP». |
+| **Carga en 3 toques** | Monto, categoría, guardar. Cuenta, fecha, persona y ámbito se completan solos (y se cambian si hace falta). Con IA, escribilo o dictalo: «super 45 mil con MP». |
 | **Fijos para confirmar** | Sueldo, alquiler, servicios: cada mes aparecen *pendientes* y se confirman con un toque, editando el monto si cambió. Si tocaste de más, *Deshacer*; lo descartado se recupera desde Movimientos. |
 | **Gastos variables** | Súper, nafta, verdulería: se cargan compra por compra y la proyección estima solo lo que falta gastar. |
 | **Cuotas** | Una compra en 12 cuotas son 12 gastos futuros. Ves cuánto de tus próximos sueldos ya está comprometido. |
@@ -56,7 +56,7 @@ vencido, cuotas, aguinaldo, bonos trimestrales, ajustes por inflación.
 | Inicio | En qué se fue | Cargar un gasto |
 |:---:|:---:|:---:|
 | <img src="docs/capturas/inicio.webp" width="240" alt="Inicio" /> | <img src="docs/capturas/categorias.webp" width="240" alt="Gastos por categoría y lo que viene" /> | <img src="docs/capturas/carga.webp" width="240" alt="Carga rápida" /> |
-| Fijos del mes para confirmar con un toque y cuánto te quedaría. | Gastos por categoría y la sobra estimada de los próximos meses. | Monto, categoría, guardar. O escribilo y lo completa la IA. |
+| Fijos del mes para confirmar con un toque y cuánto te quedaría. | Gastos por categoría y la sobra estimada de los próximos meses. | Monto, categoría, guardar. O escribilo o dictalo y lo completa la IA. |
 
 | Movimientos | Proyección | Detalle de un mes |
 |:---:|:---:|:---:|
@@ -208,23 +208,46 @@ indica (si usás Cloudflare, con el proxy desactivado). Acordate de sumarlo a lo
 
 ## Carga con IA (opcional)
 
-Permite cargar escribiendo: «ayer nafta 30 mil con la tarjeta», «le pasé 100 lucas a Leo». La IA
-solo **completa el formulario**: nunca guarda nada sin que lo confirmes. Funciona con cualquier
-proveedor compatible con la API de OpenAI; la key va como variable de entorno (no se carga desde la
-app, para no guardar un secreto en la base).
+Permite cargar escribiendo o hablando: «ayer nafta 30 mil con la tarjeta», «le pasé 100 lucas a
+Leo», «heladera en 12 cuotas de 85 mil». La IA solo **completa el formulario**: nunca guarda nada
+sin que lo confirmes. Si no encuentra la categoría, te avisa y te ofrece elegirla.
+
+**Por voz:** tocá el micrófono al lado del campo de texto, decilo y, cuando terminás de hablar, se
+completa solo. Usa el reconocimiento de voz del navegador (Chrome y Android, Safari y iPhone; en
+Firefox el botón no aparece), así que no suma costo ni configuración. La primera vez el navegador
+pide permiso para el micrófono. Como alternativa, el micrófono del teclado del celular también sirve
+para dictar en el mismo campo.
+
+Funciona con cualquier proveedor compatible con la API de OpenAI; la key va como variable de entorno
+(no se carga desde la app, para no guardar un secreto en la base).
 
 Se configuran uno o más proveedores en cadena: `LLM_PROVIDER=groq,openrouter` usa Groq y, si falla
 (sin key, rate limit, error o respuesta mal formada), cae a OpenRouter. Los que no tienen key se saltean.
 
 | Proveedor (`LLM_PROVIDER`) | Variables | Modelo por defecto | Costo |
 |---|---|---|---|
-| `groq` ([key](https://console.groq.com/keys)) | `GROQ_API_KEY`, `GROQ_MODEL` | `openai/gpt-oss-20b` | **Gratis** (con límites), muy rápido |
-| `openrouter` ([key](https://openrouter.ai/keys)) | `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | `openrouter/free` | **Gratis** (con límite diario) |
+| `groq` ([key](https://console.groq.com/keys)) | `GROQ_API_KEY`, `GROQ_MODEL` | `openai/gpt-oss-20b` | **Gratis**, sin tarjeta (con límites); ~1 s por carga |
+| `openrouter` ([key](https://openrouter.ai/keys)) | `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | `openrouter/free` | **Gratis** (con límite diario); más lento, ideal de respaldo |
 | `custom`: cualquier endpoint compatible con OpenAI (Claude, OpenAI, Ollama…) | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | — | Según el proveedor |
 
-Los modelos van de a uno o varios separados por coma (se prueban en orden). Para comparar
-proveedores con frases de ejemplo (`scripts/llm-frases.txt`): `npm run llm:bench`. Cada llamada deja
-una línea `[llm]` en el log con proveedor, modelo, latencia y tokens (`LLM_LOG=false` la apaga).
+Los modelos van de a uno o varios separados por coma (se prueban en orden). Sin `LLM_PROVIDER` el
+orden es `groq,openrouter,custom`, así que una instalación que solo tenga las `LLM_*` sigue andando.
+
+Cada llamada deja una línea `[llm]` en el log con proveedor, modelo, latencia y tokens, nunca el
+texto (`LLM_LOG=false` la apaga). Para comparar proveedores y modelos con tus frases:
+
+```bash
+npm run llm:bench                                          # frases de scripts/llm-frases.txt, con tu hogar
+BENCH_HOGAR=seed/household.example.json npm run llm:bench  # con el hogar de ejemplo (el de las frases)
+# varios modelos a la vez, con 10 s entre frases para no chocar con el límite por minuto
+BENCH_PAUSA_MS=10000 GROQ_MODEL=openai/gpt-oss-20b,qwen/qwen3.8-27b npm run llm:bench
+```
+
+Imprime por llamada la latencia, los tokens, si el JSON fue válido y qué entendió (tipo, monto,
+categoría, dueño), y un resumen por modelo. `BENCH_PAUSA_MS` espacia las llamadas para no chocar con
+el límite por minuto del plan gratis de Groq.
+
+En producción:
 
 ```bash
 npx vercel env add LLM_PROVIDER production       # groq,openrouter
@@ -233,8 +256,8 @@ npx vercel env add OPENROUTER_API_KEY production
 npx vercel deploy --prod
 ```
 
-Con modelos gratis la respuesta puede tardar unos segundos o fallar si están saturados: la app
-reintenta con otro modelo y, si no puede, te avisa y seguís cargando a mano.
+Los planes gratis tienen cupo: si Groq llega al límite o falla, la carga pasa sola a OpenRouter (que
+puede tardar unos segundos más). Si no responde ninguno, te avisa y seguís cargando a mano.
 
 ## Actualizar a una versión nueva
 
@@ -253,7 +276,7 @@ personas cuyo email de Google cargaste en *Más → Personas*; la sesión es una
 app instalada no guarda tus datos financieros en el celular.
 
 **¿Cuánto cuesta?** Nada para un hogar: Neon, Vercel (plan Hobby) y Google tienen planes gratuitos
-de sobra para esto. La IA es opcional y puede ser gratis (OpenRouter).
+de sobra para esto. La IA es opcional y puede ser gratis (Groq y OpenRouter).
 
 **¿Puedo sumar a alguien más?** Sí: *Más → Personas* con su email de Google (y agregalo como usuario
 de prueba en Google Cloud). Una persona sin email también sirve para asignarle gastos, por ejemplo
@@ -286,10 +309,11 @@ npm run lint         # oxlint
 npx tsc -b           # typecheck
 npm run build        # build de producción (PWA incluida)
 npm run db:migrate   # nueva migración (después: npx prisma generate)
+npm run llm:bench    # compara proveedores de IA (ver Carga con IA)
 ```
 
 Las reglas del dominio y los detalles que muerden están en [`CLAUDE.md`](CLAUDE.md). Los PRs son
-bienvenidos: si cambiás una regla de cálculo, sumá su test en `shared/domain/`.
+bienvenidos: mirá [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de mandar uno.
 
 ### Variables de entorno
 
