@@ -28,6 +28,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toast && (
           <div
             key={toast.id}
+            // Lo usa Sheet para no cerrarse al tocar la acción (marca en el toast mismo: al click ya está desmontado).
+            data-toast
             role={toast.error ? "alert" : "status"}
             className="anim-sheet pointer-events-auto flex min-h-12 max-w-md items-center gap-3 rounded-2xl bg-ink px-4 py-2 text-sm text-bg shadow-lg"
           >

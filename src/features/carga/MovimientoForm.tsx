@@ -1,4 +1,4 @@
-import { ChevronDown, CreditCard, LayoutGrid, Sparkles } from "lucide-react";
+import { ChevronDown, CreditCard, LayoutGrid, Mic, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { HOGAR, useHogar } from "@/app/hogar";
 import { IconoCategoria } from "@/components/Icono";
@@ -12,6 +12,7 @@ import { textoResumen } from "@/lib/tarjeta";
 import { AMBITOS, type Ambito, type Moneda, type TipoMovimiento } from "@shared/domain/tipos";
 import type { AiParseDTO, CategoriaDTO, MovimientoDTO } from "@shared/schemas/api";
 import { aplicarTecla, montoATexto, mostrarMontoTipeado, Teclado } from "./Teclado";
+import { useDictado } from "./useDictado";
 
 const NOMBRE_AMBITO: Record<Ambito, string> = { personal: "Personal", compartido: "Compartido", negocio: "Negocio", familia: "Familia" };
 const CLAVE_CUENTA = "ahorria:ultimaCuenta";
@@ -111,12 +112,13 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
   }
 
   const ia = useEscritura((texto: string) => post<AiParseDTO>("/ai/parse", { texto }));
-  async function interpretar() {
-    if (textoIa.trim().length < 2) return;
+  async function interpretar(texto = textoIa) {
+    if (texto.trim().length < 2) return;
     setErrorIa(null);
     try {
-      const { borrador: b } = await ia.mutateAsync(textoIa);
-      if (b.tipo) setTipo(b.tipo);
+      const { borrador: b } = await ia.mutateAsync(texto);
+      // cambiarTipo limpia una categoría elegida antes que no corresponda al tipo nuevo.
+      if (b.tipo) cambiarTipo(b.tipo);
       if (b.monto) setMonto(montoATexto(b.monto));
       if (b.categoriaId) setCategoriaId(b.categoriaId);
       if (b.cuentaId) {
@@ -132,12 +134,25 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
       if (b.nota) setNota(b.nota);
       if (b.cuotas) setCuotas(b.cuotas);
       setTextoIa("");
-      toast({ texto: "Listo, revisá y guardá" });
+      const tipoFinal = b.tipo ?? tipo;
+      const quedaCategoria = Boolean(b.categoriaId) || categoria?.tipo === (tipoFinal === "ingreso" ? "ingreso" : "gasto");
+      if (tipoFinal !== "transferencia" && !quedaCategoria) {
+        toast({ texto: "No encontré una categoría para esto: elegila antes de guardar", accion: { label: "Elegir", fn: () => setTodas(true) } });
+      } else toast({ texto: "Listo, revisá y guardá" });
     } catch (e) {
       // El texto queda escrito para reintentar; el resto del formulario sigue funcionando a mano.
       setErrorIa(mensajeError(e));
     }
   }
+
+  const dictado = useDictado({
+    onParcial: (texto) => {
+      setErrorIa(null);
+      setTextoIa(texto);
+    },
+    onFinal: (texto) => void interpretar(texto),
+    onError: setErrorIa,
+  });
 
   const guardar = useEscritura(async () => {
     const montoApi = parseMontoAR(monto);
@@ -222,14 +237,31 @@ export function MovimientoForm({ inicial, onListo }: { inicial?: MovimientoDTO; 
             value={textoIa}
             onChange={(e) => setTextoIa(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && interpretar()}
-            placeholder="Contalo: «super 45 mil con MP»"
+            placeholder={dictado.escuchando ? "Te escucho…" : "Contalo: «super 45 mil con MP»"}
             aria-label="Cargar escribiendo"
             enterKeyHint="go"
           />
-          <Boton variante="secundario" className="shrink-0 px-3.5" onClick={interpretar} cargando={ia.isPending} aria-label="Interpretar con IA">
+          {dictado.disponible && (
+            <Boton
+              variante={dictado.escuchando ? "primario" : "secundario"}
+              className="shrink-0 px-3.5"
+              onClick={dictado.alternar}
+              disabled={ia.isPending}
+              aria-pressed={dictado.escuchando}
+              aria-label={dictado.escuchando ? "Dejar de escuchar" : "Dictar con la voz"}
+            >
+              <Mic size={20} className={cx(dictado.escuchando && "motion-safe:animate-pulse")} />
+            </Boton>
+          )}
+          <Boton variante="secundario" className="shrink-0 px-3.5" onClick={() => interpretar()} cargando={ia.isPending} disabled={dictado.escuchando} aria-label="Interpretar con IA">
             {!ia.isPending && <Sparkles size={20} />}
           </Boton>
         </div>
+      )}
+      {dictado.escuchando && (
+        <p className="-mt-1 text-xs text-muted" aria-live="polite">
+          Escuchando… cuando termines de hablar se completa solo.
+        </p>
       )}
       {ia.isPending && <p className="-mt-1 text-xs text-muted">Interpretando… (los modelos gratis pueden tardar unos segundos)</p>}
       {errorIa && (

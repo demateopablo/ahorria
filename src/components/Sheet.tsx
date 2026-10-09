@@ -71,6 +71,8 @@ export function Sheet({
         <Dialog.Overlay className="anim-fade fixed inset-0 z-40 bg-overlay" />
         <Dialog.Content
           aria-describedby={undefined}
+          // Tocar la acción de un toast (ej. "Elegir") no es tocar afuera: no cierra la hoja.
+          onInteractOutside={(e) => e.target instanceof Element && e.target.closest("[data-toast]") && e.preventDefault()}
           className={cx(
             "anim-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-lg flex-col rounded-t-3xl bg-bg sm:bottom-6 sm:rounded-3xl",
             completo ? "top-0 rounded-t-none sm:top-6 sm:rounded-t-3xl" : "max-h-[92dvh]",
